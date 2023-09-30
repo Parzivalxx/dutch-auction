@@ -4,15 +4,11 @@
   "description": "dutch-auction-backend",
   "main": "index.js",
   "scripts": {
-    "test": "hardhat --config hardhat.config.dev.js test",
+    "test": "hardhat test",
     "prettier": "prettier --write contracts/**/*.sol",
     "lint": "prettier --list-different contracts/**/*.sol",
-    "solhint": "solhint -f table contracts/**/*.sol"
-  },
-  "husky": {
-    "hooks": {
-      "pre-push": "npm run prettier"
-    }
+    "solhint": "solhint -f table contracts/**/*.sol",
+    "prepare": "cd ../ && husky install ./backend/.husky"
   },
   "author": "",
   "license": "ISC",
@@ -21,6 +17,7 @@
     "chai": "^4.3.10",
     "ethers": "^6.7.1",
     "hardhat": "^2.17.4",
+    "husky": "^8.0.3",
     "mocha": "^10.2.0",
     "prettier": "^3.0.3",
     "prettier-plugin-solidity": "^1.1.3",
