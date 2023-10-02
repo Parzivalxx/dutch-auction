@@ -4,7 +4,7 @@
   "description": "dutch-auction-backend",
   "main": "index.js",
   "scripts": {
-    "test": "hardhat test",
+    "test": "hardhat test --config hardhat.config.local.js",
     "prettier": "prettier --write contracts/**/*.sol",
     "lint": "prettier --list-different contracts/**/*.sol",
     "solhint": "solhint -f table contracts/**/*.sol",
