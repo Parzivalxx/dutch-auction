@@ -47,7 +47,7 @@ jobs:
       - name: Install dependencies and lint backend code
         working-directory: backend
         run: |
-          npm install
+          npm install --force
           npm run lint
 
       - name: Create local node and deploy
