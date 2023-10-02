@@ -51,6 +51,7 @@ jobs:
           npm run lint
 
       - name: Create local node and deploy
+        working-directory: backend
         run: |
           npx hardhat node &
           npx hardhat run scripts/deploy.js --network localhost
