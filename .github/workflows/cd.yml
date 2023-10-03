@@ -28,4 +28,4 @@ jobs:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
           SEPOLIA_PRIVATE_KEY: ${{ secrets.SEPOLIA_PRIVATE_KEY }}
         run: |
-          npx hardhat run scripts/deploy.js --network sepolia
+          npm run deploy

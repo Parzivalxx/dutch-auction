@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3000
 
 # Command to start your Node.js application using server.js
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
