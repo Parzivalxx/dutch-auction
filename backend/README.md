@@ -5,6 +5,8 @@
 ```
 npm install --force # some legacy deps
 npm run test
-npx hardhat node
-npx hardhat run scripts/deploy.js --network localhost
+
+# deploy locally
+npm run node
+npm run deploy:local
 ```
