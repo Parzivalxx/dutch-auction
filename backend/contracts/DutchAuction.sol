@@ -32,6 +32,12 @@ contract dutchAuction {
     uint private currentBidNetWorthPool;
     Queue private bidQueue; 
 
+    event StartOfAuction();
+    event DespositTokens(address indexed _from, uint indexed _qty);
+    event LogBid(address indexed _from, uint indexed _price);
+    event EndOfAuction(uint indexed _time, uint _qtySold, uint _salePrice);
+    event SuccessfulBid(address indexed _bidder, uint _qtyAlloacated, uint refund);
+
     constructor(
         uint _startingPrice,
         uint _discountRate,
@@ -50,8 +56,15 @@ contract dutchAuction {
         token = IERC20(_token);
         tokenQty = _tokenQty;
         tokenId = _tokenId;
+        console.log(tokenQty, msg.sender, token.balanceOf(msg.sender));
 
         tokenNetWorthPool = startingPrice * tokenQty;
+        bidQueue = new Queue(); //TODO: start auction only after tokens have been injected
+    }
+    
+    function injectTokens() external {
+        token.transferFrom(msg.sender, address(this), tokenQty);
+        emit DespositTokens(msg.sender, tokenQty); //TODO: add tons of checks + tests
     }
 
     function getPrice() public view returns (uint) {
@@ -73,12 +86,11 @@ contract dutchAuction {
         uint price = getPrice();
         require(bidValue >= price, "The amount of ETH sent is less than the price of token");
         
+        bidQueue.enqueue(bidder, bidValue);
         uint currentBidPool = bidQueue.currentBidPool();
         uint currentTokenNetWorth = getCurrentTokenNetWorth();
         if (currentBidPool >= currentTokenNetWorth) {
             endAuction(currentTokenNetWorth);
-        } else {
-            bidQueue.enqueue(bidder, bidValue);
         }
         // selfdestruct(seller); //TODO: what is the new opcode?
     }
@@ -89,19 +101,19 @@ contract dutchAuction {
         uint pricePerToken = tokenValue / tokenQty;
 
         uint tokensUnallocated = tokenQty;
-        bool terminate = false;
-        while (tokensUnallocated > 0 || terminate == false) {
+        while (tokensUnallocated > 0) {
             (bidder, bidValue) = bidQueue.dequeue();
             uint qtyAllocated = min(tokensUnallocated, bidValue / pricePerToken);
             uint remainder = bidValue - qtyAllocated*pricePerToken;
             tokensUnallocated -= qtyAllocated;
 
-            require(token.transferFrom(seller, bidder, qtyAllocated), "Token transfer failed");
+            token.transfer(bidder, qtyAllocated);
             if (remainder > 0) {
-                (bool success, ) = bidder.call{value: remainder}("");
-                require(success, "Remainder refund failed.");
+                payable(bidder).transfer(remainder);
             }
 
         }
+        console.log("seller transfered ", address(this).balance);
+        seller.transfer(address(this).balance);
     }
 }
