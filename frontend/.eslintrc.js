@@ -31,5 +31,5 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: ['react', 'prettier'],
-  rules: { 'prettier/prettier': ['error', { singleQuote: true }] },
+  rules: { 'prettier/prettier': ['error', { singleQuote: true, endOfLine: 'auto' }] },
 };

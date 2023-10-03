@@ -9,11 +9,11 @@ struct Bid {
 }
 
 contract Queue {
-
-    mapping (uint256 => Bid /* or any other type */ ) public _queue;
+    mapping(uint256 => Bid /* or any other type */) public _queue;
     uint256 public first;
     uint256 public last;
     uint256 public bidPool;
+
     constructor() {
         first = 1;
         last = 1;
@@ -30,7 +30,7 @@ contract Queue {
     function dequeue() public returns (address, uint) {
         Bid memory bid;
         require(last > first);
-        console.log("deq", first,_queue[first].bidder, _queue[first].bidValue);
+        console.log("deq", first, _queue[first].bidder, _queue[first].bidValue);
         bid = _queue[first];
         delete _queue[first];
         address addr = bid.bidder;
