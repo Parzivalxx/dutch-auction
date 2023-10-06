@@ -21,10 +21,6 @@ module.exports = {
         sourceType: 'script',
       },
     },
-    {
-      files: ['**/*.{js,jsx,ts,tsx}'],
-      extends: ['plugin:prettier/recommended'],
-    },
   ],
   parserOptions: {
     ecmaVersion: 'latest',

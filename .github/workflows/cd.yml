@@ -30,13 +30,13 @@ jobs:
         run: |
           npm run deploy
 
-      - name: Commit and push changes in frontend folder
+      - name: Commit and push changes
         continue-on-error: true
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add frontend
-          git commit -m "Update abi files from deployment"
+          git add .
+          git commit -m "Update abi files and .env from deployment"
           git push origin main
 
       - name: Deploy Frontend
