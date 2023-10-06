@@ -1,4 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox");
+require("dotenv").config();
 
 // Go to https://alchemy.com, sign up, create a new App in
 // its dashboard, and replace "KEY" with its key
