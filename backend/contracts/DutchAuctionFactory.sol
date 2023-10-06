@@ -8,10 +8,22 @@ contract DutchAuctionFactory {
     event AuctionDe(address tokenAddress);
 
     event AuctionDeployed(address indexed auctionAddress);
-    
-    function deployAuction(address _token, uint _qty, uint _startPrice, uint _discountRate) public returns (address) {
+
+    function deployAuction(
+        address _token,
+        uint _qty,
+        uint _startPrice,
+        uint _discountRate
+    ) public returns (address) {
         auctionCount += 1;
-        DutchAuction dutchAuction = new DutchAuction(msg.sender, _startPrice, _discountRate, _token, _qty, auctionCount);
+        DutchAuction dutchAuction = new DutchAuction(
+            msg.sender,
+            _startPrice,
+            _discountRate,
+            _token,
+            _qty,
+            auctionCount
+        );
         auctions.push(address(dutchAuction));
         emit AuctionDeployed(address(dutchAuction));
         return address(dutchAuction);

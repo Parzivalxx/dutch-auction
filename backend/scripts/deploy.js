@@ -5,22 +5,63 @@
 // will compile your contracts, add the Hardhat Runtime Environment's members to the
 // global scope, and execute the script.
 const hre = require("hardhat");
+const fs = require("fs");
+const path = require("path");
+const { spawn } = require("child_process");
 
 async function main() {
   const [deployer] = await ethers.getSigners();
 
-  console.log(
-  "Deploying contracts with the account:",
-  deployer.address
+  console.log("Deploying contracts with the account:", deployer.address);
+
+  const DutchAuctionFactory = await hre.ethers.getContractFactory(
+    "DutchAuctionFactory",
   );
-  
-  const DutchAuctionFactory = await hre.ethers.getContractFactory("DutchAuctionFactory");
   const TokenFactory = await hre.ethers.getContractFactory("TokenFactory");
   const dutchAuctionFactory = await DutchAuctionFactory.deploy();
   const tokenFactory = await TokenFactory.deploy();
 
-  console.log("DutchAuctionFactory deployed at:", dutchAuctionFactory.address);
-  console.log("TokenFactory deployed at:", tokenFactory.address);
+  await dutchAuctionFactory.waitForDeployment();
+  await tokenFactory.waitForDeployment();
+
+  dutchAuctionAddress = dutchAuctionFactory.target;
+  tokenAddress = tokenFactory.target;
+
+  console.log("DutchAuctionFactory deployed at:", dutchAuctionAddress);
+  console.log("TokenFactory deployed at:", tokenAddress);
+
+  const outputPath = path.join(__dirname, "../../frontend/.env");
+  const envVariables = `DUTCH_AUCTION_ADDRESS=${dutchAuctionAddress}\nTOKEN_ADDRESS=${tokenAddress}\n`;
+
+  // Write the contract addresses to the .env file
+  fs.writeFileSync(outputPath, envVariables);
+
+  console.log("Contract address written to frontend/.env");
+
+  // Run the copyABIs.js script as a child process
+  const copyABIsProcess = spawn("node", ["./scripts/copyABIs.js"]);
+
+  // Handle output and errors from the child process
+  copyABIsProcess.stdout.on("data", (data) => {
+    console.log(`copyABIs.js output: ${data}`);
+  });
+
+  copyABIsProcess.stderr.on("data", (data) => {
+    console.error(`copyABIs.js error: ${data}`);
+  });
+
+  // Wait for the child process to exit
+  await new Promise((resolve, reject) => {
+    copyABIsProcess.on("close", (code) => {
+      if (code === 0) {
+        console.log("copyABIs.js script completed successfully");
+        resolve();
+      } else {
+        console.error(`copyABIs.js script exited with code ${code}`);
+        reject(new Error(`copyABIs.js script exited with code ${code}`));
+      }
+    });
+  });
 }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -30,4 +71,4 @@ main()
   .catch((error) => {
     console.error(error);
     process.exit(1);
-});
+  });

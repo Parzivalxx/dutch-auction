@@ -7,11 +7,11 @@ struct Bid {
 }
 
 contract Queue {
-
-    mapping (uint256 => Bid) public _queue;
+    mapping(uint256 => Bid) public _queue;
     uint256 public first;
     uint256 public last;
     uint256 public bidPool;
+
     constructor() {
         first = 1;
         last = 1;

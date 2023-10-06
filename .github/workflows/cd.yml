@@ -2,8 +2,6 @@ name: CD
 
 on:
   push:
-    branches:
-      - main
 
 jobs:
   deploy-backend:
@@ -29,3 +27,17 @@ jobs:
           SEPOLIA_PRIVATE_KEY: ${{ secrets.SEPOLIA_PRIVATE_KEY }}
         run: |
           npm run deploy
+
+      - name: Commit and push changes in frontend folder
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add frontend
+          git commit -m "Update abi files from deployment"
+          git push origin main
+
+      - name: Deploy Frontend
+        env:
+          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          curl "$deploy_url"
