@@ -31,7 +31,7 @@ async function main() {
   console.log("TokenFactory deployed at:", tokenAddress);
 
   const outputPath = path.join(__dirname, "../../frontend/.env");
-  const envVariables = `DUTCH_AUCTION_ADDRESS=${dutchAuctionAddress}\nTOKEN_ADDRESS=${tokenAddress}\n`;
+  const envVariables = `REACT_APP_DUTCH_AUCTION_FACTORY_ADDRESS=${dutchAuctionAddress}\nREACT_APP_TOKEN_FACTORY_ADDRESS=${tokenAddress}\n`;
 
   // Write the contract addresses to the .env file
   fs.writeFileSync(outputPath, envVariables);

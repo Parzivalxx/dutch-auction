@@ -1,7 +1,4 @@
-export const adAreaStyle = {
-  display: 'grid',
-  gridTemplateColumns: 'auto auto auto',
-  gridGap: '1.2rem',
+export const auctionTableStyle = {
   justifyContent: 'center',
   margin: '1rem',
 };
@@ -9,14 +6,29 @@ export const adAreaStyle = {
 export const boardStyle = {
   display: 'flex',
   flexDirection: 'column',
+  width: '100rem',
+  backgroundColor: '#f5f5f5',
 };
 
 export const paginationStyle = {
   display: 'flex',
   justifyContent: 'center',
+  margin: '2rem',
 };
 
-export const boardCardStyle = {
-  width: 240,
-  height: 330,
+export const tableHeaderStyle = {
+  fontSize: '1.25rem',
+  fontWeight: 'bold',
+  color: '#0288d1',
+};
+
+export const tableCellStyle = {
+  fontSize: '1rem',
+};
+
+export const tableRowStyle = {
+  cursor: 'pointer',
+  '&:hover': {
+    backgroundColor: '#f5f5f5',
+  },
 };

@@ -1,6 +1,8 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import './App.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import DutchAuction from './abis/DutchAuctionFactory.json';
+import { useDispatch } from 'react-redux';
 
 import Home from './components/Home';
 import Nav from './components/Nav';
@@ -12,7 +14,7 @@ function App() {
       <Nav />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/ads/:adId" element={<Ad />} />
+        <Route path="/auctions/:auctionsID" element={<Ad />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,82 +1,53 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // MUI
-import { Button, Box, ButtonGroup } from '@mui/material';
+import { 
+  Button, 
+  Box, 
+  ButtonGroup, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow,
+  Paper, } 
+  from '@mui/material';
+
 // Styling
 import './css/board.css';
 import {
-  adAreaStyle,
-  boardCardStyle,
+  auctionTableStyle,
   boardStyle,
   paginationStyle,
+  tableCellStyle,
+  tableHeaderStyle,
+  tableRowStyle,
 } from './css/boardStyle';
 
 // Components
 import Spinner from './Spinner';
-import Card from './Card';
+import { getDutchAuctionFactoryContract, getDutchAuctionContract } from '../utils/contract';
 
 const Board = (props) => {
+
+  const navigate = useNavigate();
   const [pageNumber, setPageNumber] = useState(1);
-  const [adPerPage] = useState(6);
+  const [auncPerPage] = useState(10);
+  const [auctions, setAuctions] = useState([]);
 
-  // useEffect(() => {
-  //   if (props.passedUser) {
-  //     props.loadAds(props.passedUser);
-  //   } else {
-  //     props.loadAds();
-  //     const socket = openSocket(process.env.REACT_APP_API_BASE_URL);
-  //     // when new ad is added
-  //     socket.on('addAd', (data) => {
-  //       console.log(data);
-  //       if (
-  //         props.user &&
-  //         data.ad.owner &&
-  //         data.ad.owner.toString() !== props.user._id.toString()
-  //       ) {
-  //         props.clearAlerts();
-  //         props.setAlert('New ads available', 'info', 60000);
-  //       }
-  //     });
-  //     // when auction starts/ends
-  //     socket.on('auctionStarted', (res) => {
-  //       props.updateAdInList(res.data);
-  //     });
-  //     socket.on('auctionEnded', (res) => {
-  //       props.updateAdInList(res.data);
-  //     });
+  useEffect(() => {
+    setPageNumber(1);
+  }, [])
 
-  //     // disconnect socket when page left
-  //     return () => {
-  //       socket.emit('leaveHome');
-  //       socket.off();
-  //       props.clearAlerts();
-  //     };
-  //   }
-  // }, []);
-
-  // Check if user is logged
-  // if (!props.isAuth) {
-  //   return <Navigate to='/login' />;
-  // }
-
-
-  // test props
-  let ads = Array(10).fill({
-    "_id": '123',
-    "auctionEnded": false,
-  });
-  let test_props = {
-    "loading": false,
-    "ads": ads
-  }
-  props = test_props;
 
   // Pagination
-  let lastAdIndex = pageNumber * adPerPage;
-  let firstAdIndex = lastAdIndex - adPerPage;
+  let lastAdIndex = pageNumber * auncPerPage;
+  let firstAdIndex = lastAdIndex - auncPerPage;
   // Page numbers for buttons
   let pageNumbers = [];
-  const num = Math.ceil(test_props.ads.length / adPerPage);
+  const num = Math.ceil(auctions.length / auncPerPage);
   for (let i = 1; i <= num; i++) {
     pageNumbers.push(i);
   }
@@ -85,22 +56,70 @@ const Board = (props) => {
     setPageNumber(num);
   };
 
+  const onRowClick = (address) => {
+    navigate(`/auctions/${address}`)
+  }
+  const dutchAuctionFactoryContract = getDutchAuctionFactoryContract()
+
+  useEffect(() => {
+    async function getAuctions(){
+      const auction_count = await dutchAuctionFactoryContract.auctionCount()
+      const auction_count_int = parseInt(auction_count._hex)
+      let auctions = []
+      for(let i = 0; i < auction_count_int; i++){
+        const auction_address = await dutchAuctionFactoryContract.auctions(i)
+        const auctionContract = getDutchAuctionContract(auction_address)
+        // tx = await auctionContract.startAuction()
+        // await tx.wait()
+        const auctionStartPrice = await auctionContract.startingPrice()
+        const auctionStartPriceInt = parseInt(auctionStartPrice._hex)
+        const auctionStatus = await auctionContract.active()
+        let auction = {
+          address: auction_address,
+          startPrice: auctionStartPriceInt,
+          status: auctionStatus
+        }
+        auctions.push(auction)
+      }
+      setAuctions(auctions)
+    }
+    getAuctions()
+  }, [])
 
   return props.loading ? (
     <Spinner />
   ) : (
     <Box sx={boardStyle}>
-      <Box sx={adAreaStyle}>
-        {props.ads.slice(firstAdIndex, lastAdIndex).map((ad) => {
-          return ad.auctionEnded ? null : (
-            <div className='product__container' key={ad._id}>
-              <Card ad={ad} key={ad._id} dashCard={false} cardStyle={boardCardStyle} />
-            </div>
-          );
-        })}
+      <Box sx={auctionTableStyle}>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={tableHeaderStyle} style={{width: '40%'}}>Auction</TableCell>
+                <TableCell align='right' sx={tableHeaderStyle} style={{width: '15%'}}>Status</TableCell>
+                <TableCell align='right' sx={tableHeaderStyle} style={{width: '15%'}}>Remaining Time</TableCell>
+                <TableCell align='right' sx={tableHeaderStyle} style={{width: '15%'}}>Current Price</TableCell>
+                <TableCell align='right' sx={tableHeaderStyle} style={{width: '15%'}}>Reserve Price</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+            {auctions.map((auction) => {
+              return (
+                <TableRow sx={tableRowStyle} onClick={() => onRowClick(auction.address)}>
+                  <TableCell sx={tableCellStyle}>{auction.address}</TableCell>
+                  <TableCell align='right' sx={tableCellStyle}>{auction.status?'In Progress':'Not Started'}</TableCell>
+                  <TableCell align='right' sx={tableCellStyle}>auction.remainingTime</TableCell>
+                  <TableCell align='right' sx={tableCellStyle}>{auction.startPrice}</TableCell>
+                  <TableCell align='right' sx={tableCellStyle}>auction.reservePrice</TableCell>
+                </TableRow>
+              );
+            })}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Box>
       <Box sx={paginationStyle}>
-        <ButtonGroup variant='outlined' size='small'>
+        <ButtonGroup variant='outlined' size='medium'>
           <Button
             disabled={pageNumber === 1}
             onClick={(e) => clickPageNumberButton(pageNumber - 1)}
@@ -129,20 +148,5 @@ const Board = (props) => {
     </Box>
   );
 };
-
-const mapStateToProps = (state) => ({
-  ads: state.ad.ads,
-  loading: state.auth.loading,
-  isAuth: state.auth.isAuthenticated,
-  user: state.auth.user,
-});
-
-// export default connect(mapStateToProps, {
-//   loadAds,
-//   adPostedByOther,
-//   setAlert,
-//   updateAdInList,
-//   clearAlerts,
-// })(Board);
 
 export default Board;

@@ -1,6 +1,7 @@
 .home {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   height: 93vh;
 }
 
