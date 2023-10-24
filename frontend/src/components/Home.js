@@ -8,28 +8,13 @@ import Board from './Board';
 import Alert from './Alert';
 
 const Home = (props) => {
-  // Check if user is logged
-//   if (!props.isAuth) {
-//     return <Navigate to='/login' />;
-//   }
 
   return (
     <div className='home'>
-      {/* <div className='alert__display'>
-        <Alert />
-      </div> */}
-      <div className='product__board'>
-        <Board />
-      </div>
+      <Board />
     </div>
   );
 };
 
-// const mapStateToProps = (state) => ({
-//   loading: state.auth.loading,
-//   isAuth: state.auth.isAuthenticated,
-// });
-
-// export default connect(mapStateToProps, {})(Home);
 
 export default Home;

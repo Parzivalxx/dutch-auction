@@ -6,16 +6,20 @@ import { useDispatch } from 'react-redux';
 
 import Home from './components/Home';
 import Nav from './components/Nav';
-import Ad  from './components/Ad';
+import AuctionPage  from './components/AuctionPage';
+import CreateAuctionModal from './components/CreateAuction';
 
 function App() {
+  const [openModal, setOpenModal] = useState(false);
+  
   return (
     <BrowserRouter>
-      <Nav />
+      <Nav openModal={openModal} handleOpenModal={() => setOpenModal(true)}/>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/auctions/:auctionsID" element={<Ad />} />
+        <Route path="/auctions/:auctionID" element={<AuctionPage/>} />
       </Routes>
+      <CreateAuctionModal openModal={openModal} handleCloseModal={() => setOpenModal(false)} />
     </BrowserRouter>
   );
 }

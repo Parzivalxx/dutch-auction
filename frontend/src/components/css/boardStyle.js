@@ -6,8 +6,11 @@ export const auctionTableStyle = {
 export const boardStyle = {
   display: 'flex',
   flexDirection: 'column',
-  width: '100rem',
+  alignItems: 'center',
+  justifyContent: 'center',
   backgroundColor: '#f5f5f5',
+  width: '80%',
+  marginTop: '5rem',
 };
 
 export const paginationStyle = {

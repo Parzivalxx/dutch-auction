@@ -7,25 +7,16 @@ import { Button, Link } from '@mui/material';
 // Files
 import './css/nav.css';
 import logo from '../images/nav-bar-banner.png';
-import DutchAuctionFactory from '../abis/DutchAuctionFactory.json';
-import TokenFactory from '../abis/TokenFactory.json';
 
 import { accountLinked } from '../actions/accountActions';
 
-import detectEthereumProvider from '@metamask/detect-provider';
-import { 
-  getDutchAuctionFactoryContract,
-  getTokenFactoryContract,
-  getTokenContract,
-  decodeTransactionData,
-  decodeTransctionLogs,
-  getDutchAuctionContract
- } from '../utils/contract';
-
 
 const Nav = (props) => {
+  const {openModal, handleOpenModal} = props;
+
   const account_id = useSelector((state) => state.account.account_id);
   const { sdk, connected, connecting, provider, chainId } = useSDK();
+
   const  dispatch = useDispatch();
 
   const connect = async () => {
@@ -46,26 +37,6 @@ const Nav = (props) => {
       console.warn(`failed to disconnect..`, err);
     }
   }
-  const dutchAuctionFactoryContract = getDutchAuctionFactoryContract()
-  const tokenFactoryContract = getTokenFactoryContract()
-  const ethers = require('ethers')
-  async function createAuction(){
-      let test_amount = 100
-      const deployTokenTX = await tokenFactoryContract.deployToken('Test Token', 'TT', 1000)
-      const rc1 = await deployTokenTX.wait()
-
-      const tokenAdd = decodeTransctionLogs(TokenFactory, rc1.logs)[0].address
-      const tokenContract = getTokenContract(tokenAdd)
-
-      const deployAuctionTx = await dutchAuctionFactoryContract.deployAuction(tokenAdd, test_amount, 900000, 1)
-      const rc2 = await deployAuctionTx.wait()
-
-      const auctionAdd = decodeTransctionLogs(DutchAuctionFactory, rc2.logs)[0].address
-      tokenContract.approve(auctionAdd, test_amount)
-
-      const aunction = getDutchAuctionContract(auctionAdd)
-      aunction.startAuction()
-  }
 
   return (
     <div className='nav'>
@@ -80,7 +51,7 @@ const Nav = (props) => {
             <RouterLink to='/' style={{ textDecoration: 'none' }}>
               <Button>Home</Button>
             </RouterLink>
-            <Button onClick={createAuction}>Create Auction</Button>
+            <Button onClick={handleOpenModal}>Create Auction</Button>
           </div>
       </div>
 
