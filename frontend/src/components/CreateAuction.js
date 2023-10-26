@@ -10,8 +10,10 @@ import {
     decodeTransctionLogs,
    } from '../utils/contract';
 import { modalStyle, modalContainterStyle } from "./css/createAuction";
+import { useNavigate } from "react-router-dom";
 
 const CreateAuctionModal = (props) => {
+    const navigate = useNavigate()
     const { openModal, handleCloseModal } = props;
     const [formData, setFormData] = useState({
         tokenName: '',
@@ -87,6 +89,7 @@ const CreateAuctionModal = (props) => {
         await tokenContract.approve(auctionAdd, tokenQty)
         handleCloseModal()
         resetFormData()
+        navigate(`/auctions/${auctionAdd}`)
     }
 
     return (

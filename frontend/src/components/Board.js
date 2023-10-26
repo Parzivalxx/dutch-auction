@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Await, useNavigate } from 'react-router-dom';
 
 // MUI
 import { 
@@ -29,6 +29,7 @@ import {
 import Spinner from './Spinner';
 import { getDutchAuctionFactoryContract, getDutchAuctionContract } from '../utils/contract';
 import LoadingDisplay from './LoadingDisplay';
+import {convertUnixTimeToMinutes} from '../utils/utils'
 
 const Board = (props) => {
   const [loading, setLoading] = useState(true);
@@ -74,39 +75,28 @@ const Board = (props) => {
         const auctionStartPrice = await auctionContract.startingPrice()
         const auctionStartPriceInt = parseInt(auctionStartPrice._hex)
         const auctionStatus = await auctionContract.active()
+        const auctionReservePrice = parseInt((await auctionContract.getReservePrice())._hex)
 
         let auction = {
           address: auction_address,
           startPrice: auctionStartPriceInt,
           currentPrice: auctionStartPriceInt,
-          remainingTime: 'NA',
+          remainingTime: 'NaN',
           status: auctionStatus,
-          reservePrice: 'NA'
+          reservePrice: auctionReservePrice
         }
 
         if (auctionStatus == true) {
-          const auctionCurrentPrice = await auctionContract.getPrice()
+          const currentTime = Math.floor(Date.now() / 1000)
+          const auctionCurrentPrice = await auctionContract.getPrice(currentTime)
           const auctionCurrentPriceInt = parseInt(auctionCurrentPrice._hex)
           auction.currentPrice = auctionCurrentPriceInt
           // console.log(auctionCurrentPriceInt)
-          
-          const auctionStartAt = await auctionContract.startAt()
-          const auctionStartAtInt = parseInt(auctionStartAt._hex)
 
           const auctionExpireAt = await auctionContract.expiresAt()
           const auctionExpireAtInt = parseInt(auctionExpireAt._hex)
-          const currentTime = Math.floor(Date.now() / 1000)
           const auctionRemainingTime = Math.max(0, auctionExpireAtInt - currentTime)
-          const minutes = Math.floor(auctionRemainingTime / 60)
-          const seconds = auctionRemainingTime % 60
-          auction.remainingTime = `${minutes}m ${seconds}s`
-          
-          const auctionDuration = auctionExpireAtInt - auctionStartAtInt
-
-          const auctionDiscountRate = await auctionContract.discountRate()
-          const auctionDiscountRateInt = parseInt(auctionDiscountRate._hex)
-          const auctionReservePrice = auctionStartPriceInt - auctionDiscountRateInt*auctionDuration
-          auction.reservePrice = auctionReservePrice
+          auction.remainingTime = convertUnixTimeToMinutes(auctionRemainingTime)
         }
 
         auctions.push(auction)

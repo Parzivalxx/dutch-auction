@@ -15,7 +15,9 @@ import {
   paperStyle } from './css/auctionPage';
 
 import { getDutchAuctionContract, getTokenContract } from '../utils/contract';
+import {convertUnixTimeToMinutes} from '../utils/utils'
 import LoadingDisplay from './LoadingDisplay';
+import { ethers } from 'ethers';
 
 
 const AuctionPage = (props) => {
@@ -31,9 +33,9 @@ const AuctionPage = (props) => {
     startedOn: 'Not Started',
     tokenQty: '',
     startingPrice: '',
-    reservePrice: 'NA',
-    currentPrice: 'NA',
-    timeRemaining: 'NA',
+    reservePrice: 'NaN',
+    currentPrice: 'NaN',
+    timeRemaining: 'NaN',
     active: false,
   });
   const [count, setCount] = useState(0);
@@ -53,6 +55,7 @@ const AuctionPage = (props) => {
       const tokenQty = parseInt((await dutchAuctionContract.tokenQty())._hex);
       const startingPrice = parseInt((await dutchAuctionContract.startingPrice())._hex);
       const isActive = await dutchAuctionContract.active();
+      const reservePrice = parseInt((await dutchAuctionContract.getReservePrice())._hex)
 
       const newAuction = {
         ...auction,
@@ -62,6 +65,7 @@ const AuctionPage = (props) => {
         tokenQty: tokenQty,
         startingPrice: startingPrice,
         active: isActive,
+        reservePrice: reservePrice
       };
 
       if (isActive) {
@@ -70,17 +74,11 @@ const AuctionPage = (props) => {
         newAuction.startedOn = startedOn;
 
         const expiresAt = parseInt((await dutchAuctionContract.expiresAt())._hex);
-        const duration = expiresAt - startAt;
-        const discountRate = parseInt((await dutchAuctionContract.discountRate())._hex);
-        const reservePrice = startingPrice - discountRate * duration;
-        newAuction.reservePrice = reservePrice;
+        const currentTime = Math.floor(Date.now() / 1000);
+        const timeRemaining = Math.max((expiresAt - currentTime), 0);
+        newAuction.timeRemaining = convertUnixTimeToMinutes(timeRemaining)
 
-        const timeRemaining = expiresAt - Math.floor(Date.now() / 1000);
-        const minutes = Math.floor(timeRemaining / 60);
-        const seconds = timeRemaining % 60;
-        newAuction.timeRemaining = `${minutes}m ${seconds}s`;
-
-        const currentPrice = parseInt((await dutchAuctionContract.getPrice())._hex);
+        const currentPrice = parseInt((await dutchAuctionContract.getPrice(currentTime))._hex);
         newAuction.currentPrice = currentPrice;
       }
 
@@ -95,9 +93,17 @@ const AuctionPage = (props) => {
   }
   , [count]);
 
+  const dutchAuctionContract = getDutchAuctionContract(auctionAddress);
   async function startAuction() {
-    const dutchAuctionContract = getDutchAuctionContract(auctionAddress);
     await dutchAuctionContract.startAuction();
+  }
+
+  const [enableBid, setEnableBid] = useState(true);
+  const [bidAmount, setBidAmount] = useState();
+  async function placeBid() {
+    const currentTime = Math.floor(Date.now() / 1000);
+    await dutchAuctionContract.placeBid(currentTime, {value: ethers.utils.parseEther(bidAmount.toString())});
+    setEnableBid(false);
   }
 
   return (
@@ -126,15 +132,21 @@ const AuctionPage = (props) => {
           <Typography sx={fieldStyle}>Time Remaining: {auction.timeRemaining}</Typography>
           <Typography sx={fieldStyle}>Current Price: {auction.currentPrice}</Typography>
           <Box sx={bidAreaStyle}>
-            {!currentAccountAddress==auction.sellerAdd.toLowerCase()? (
+            {!(currentAccountAddress==auction.sellerAdd.toLowerCase())? (
               <div>
                 <TextField
-                label='$'
+                label='ETH'
                 size='small'
                 style={{width: '50%', marginRight: '1rem'}}
+                value={bidAmount}
+                disabled = {!auction.active || !enableBid || !currentAccountAddress}
+                onChange={(e) => setBidAmount(e.target.value)}
                 />
                 <Button
                   variant='contained'
+                  color='primary'
+                  onClick={placeBid}
+                  disabled = {!auction.active || !enableBid || !currentAccountAddress}
                 >
                   Place bid
                 </Button>
