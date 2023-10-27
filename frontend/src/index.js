@@ -3,25 +3,28 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { MetaMaskProvider } from '@metamask/sdk-react'
+import { MetaMaskProvider } from '@metamask/sdk-react';
 import { Provider } from 'react-redux';
-import { PersistGate } from 'redux-persist/integration/react'
-import {store, persistor} from './store'
+import { PersistGate } from 'redux-persist/integration/react';
+import { store, persistor } from './store';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <MetaMaskProvider debug={true} sdkOptions={{
-          logging:{
+        <MetaMaskProvider
+          debug={true}
+          sdkOptions={{
+            logging: {
               developerMode: true,
             },
             dappMetadata: {
-              name: "Dutch Auction",
+              name: 'Dutch Auction',
               url: window.location.host,
-            }
-        }}>
+            },
+          }}
+        >
           <App />
         </MetaMaskProvider>
       </PersistGate>

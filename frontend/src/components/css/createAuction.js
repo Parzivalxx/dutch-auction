@@ -8,4 +8,4 @@ export const modalContainterStyle = {
 export const modalStyle = {
   width: '30%',
   padding: '1rem',
-}
+};

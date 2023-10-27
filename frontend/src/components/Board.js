@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Await, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 // MUI
-import { 
-  Button, 
-  Box, 
-  ButtonGroup, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
+import {
+  Button,
+  Box,
+  ButtonGroup,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
   TableRow,
-  Paper, } 
-  from '@mui/material';
+  Paper,
+} from '@mui/material';
 
 // Styling
 import {
@@ -26,12 +26,11 @@ import {
 } from './css/boardStyle';
 
 // Components
-import Spinner from './Spinner';
 import { getDutchAuctionFactoryContract, getDutchAuctionContract } from '../utils/contract';
 import LoadingDisplay from './LoadingDisplay';
-import {convertUnixTimeToMinutes} from '../utils/utils'
+import { convertUnixTimeToMinutes } from '../utils/utils';
 
-const Board = (props) => {
+const Board = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [pageNumber, setPageNumber] = useState(1);
@@ -41,8 +40,7 @@ const Board = (props) => {
 
   useEffect(() => {
     setPageNumber(1);
-  }, [])
-
+  }, []);
 
   // Pagination
   let lastAdIndex = pageNumber * auncPerPage;
@@ -59,23 +57,23 @@ const Board = (props) => {
   };
 
   const onRowClick = (address) => {
-    navigate(`/auctions/${address}`)
-  }
-  const dutchAuctionFactoryContract = getDutchAuctionFactoryContract()
+    navigate(`/auctions/${address}`);
+  };
+  const dutchAuctionFactoryContract = getDutchAuctionFactoryContract();
 
   useEffect(() => {
-    async function getAuctions(){
-      const auction_count = await dutchAuctionFactoryContract.auctionCount()
-      const auction_count_int = parseInt(auction_count._hex)
-      let auctions = []
-      for(let i = 0; i < auction_count_int; i++){
-        const auction_address = await dutchAuctionFactoryContract.auctions(i)
-        const auctionContract = getDutchAuctionContract(auction_address)
+    async function getAuctions() {
+      const auction_count = await dutchAuctionFactoryContract.auctionCount();
+      const auction_count_int = parseInt(auction_count._hex);
+      let auctions = [];
+      for (let i = 0; i < auction_count_int; i++) {
+        const auction_address = await dutchAuctionFactoryContract.auctions(i);
+        const auctionContract = getDutchAuctionContract(auction_address);
 
-        const auctionStartPrice = await auctionContract.startingPrice()
-        const auctionStartPriceInt = parseInt(auctionStartPrice._hex)
-        const auctionStatus = await auctionContract.active()
-        const auctionReservePrice = parseInt((await auctionContract.getReservePrice())._hex)
+        const auctionStartPrice = await auctionContract.startingPrice();
+        const auctionStartPriceInt = parseInt(auctionStartPrice._hex);
+        const auctionStatus = await auctionContract.active();
+        const auctionReservePrice = parseInt((await auctionContract.getReservePrice())._hex);
 
         let auction = {
           address: auction_address,
@@ -83,33 +81,35 @@ const Board = (props) => {
           currentPrice: auctionStartPriceInt,
           remainingTime: 'NaN',
           status: auctionStatus,
-          reservePrice: auctionReservePrice
-        }
+          reservePrice: auctionReservePrice,
+        };
 
         if (auctionStatus == true) {
-          const currentTime = Math.floor(Date.now() / 1000)
-          const auctionCurrentPrice = await auctionContract.getPrice(currentTime)
-          const auctionCurrentPriceInt = parseInt(auctionCurrentPrice._hex)
-          auction.currentPrice = auctionCurrentPriceInt
+          const currentTime = Math.floor(Date.now() / 1000);
+          const auctionCurrentPrice = await auctionContract.getPrice(currentTime);
+          const auctionCurrentPriceInt = parseInt(auctionCurrentPrice._hex);
+          auction.currentPrice = auctionCurrentPriceInt;
           // console.log(auctionCurrentPriceInt)
 
-          const auctionExpireAt = await auctionContract.expiresAt()
-          const auctionExpireAtInt = parseInt(auctionExpireAt._hex)
-          const auctionRemainingTime = Math.max(0, auctionExpireAtInt - currentTime)
-          auction.remainingTime = convertUnixTimeToMinutes(auctionRemainingTime)
+          const auctionExpireAt = await auctionContract.expiresAt();
+          const auctionExpireAtInt = parseInt(auctionExpireAt._hex);
+          const auctionRemainingTime = Math.max(0, auctionExpireAtInt - currentTime);
+          auction.remainingTime = convertUnixTimeToMinutes(auctionRemainingTime);
         }
 
-        auctions.push(auction)
+        auctions.push(auction);
       }
-      setAuctions(auctions)
+      setAuctions(auctions);
     }
-    setLoading(true)
-    const interval = setInterval(() => { 
-      setCount(count + 1); 
+    setLoading(true);
+
+    setInterval(() => {
+      setCount(count + 1);
     }, 10000);
-    getAuctions()
-    setLoading(false)
-  }, [count])
+
+    getAuctions();
+    setLoading(false);
+  }, [count]);
 
   return loading ? (
     <LoadingDisplay />
@@ -121,36 +121,57 @@ const Board = (props) => {
             <TableHead>
               <TableRow>
                 <TableCell sx={tableHeaderStyle}>Auction</TableCell>
-                <TableCell align='right' sx={tableHeaderStyle}>Status</TableCell>
-                <TableCell align='right' sx={tableHeaderStyle}>Remaining Time</TableCell>
-                <TableCell align='right' sx={tableHeaderStyle}>Starting Price</TableCell>
-                <TableCell align='right' sx={tableHeaderStyle}>Current Price</TableCell>
-                <TableCell align='right' sx={tableHeaderStyle}>Reserve Price</TableCell>
+                <TableCell align="right" sx={tableHeaderStyle}>
+                  Status
+                </TableCell>
+                <TableCell align="right" sx={tableHeaderStyle}>
+                  Remaining Time
+                </TableCell>
+                <TableCell align="right" sx={tableHeaderStyle}>
+                  Starting Price
+                </TableCell>
+                <TableCell align="right" sx={tableHeaderStyle}>
+                  Current Price
+                </TableCell>
+                <TableCell align="right" sx={tableHeaderStyle}>
+                  Reserve Price
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-            {auctions.slice(firstAdIndex, lastAdIndex).map((auction) => {
-              return (
-                <TableRow sx={tableRowStyle} onClick={() => onRowClick(auction.address)}>
-                  <TableCell sx={tableCellStyle}>{auction.address}</TableCell>
-                  <TableCell align='right' sx={tableCellStyle}>{auction.status?'In Progress':'Not Started'}</TableCell>
-                  <TableCell align='right' sx={tableCellStyle}>{auction.remainingTime}</TableCell>
-                  <TableCell align='right' sx={tableCellStyle}>{auction.startPrice}</TableCell>
-                  <TableCell align='right' sx={tableCellStyle}>{auction.currentPrice}</TableCell>
-                  <TableCell align='right' sx={tableCellStyle}>{auction.reservePrice}</TableCell>
-                </TableRow>
-              );
-            })}
+              {auctions.slice(firstAdIndex, lastAdIndex).map((auction) => {
+                return (
+                  <TableRow
+                    key={auction.address}
+                    sx={tableRowStyle}
+                    onClick={() => onRowClick(auction.address)}
+                  >
+                    <TableCell sx={tableCellStyle}>{auction.address}</TableCell>
+                    <TableCell align="right" sx={tableCellStyle}>
+                      {auction.status ? 'In Progress' : 'Not Started'}
+                    </TableCell>
+                    <TableCell align="right" sx={tableCellStyle}>
+                      {auction.remainingTime}
+                    </TableCell>
+                    <TableCell align="right" sx={tableCellStyle}>
+                      {auction.startPrice}
+                    </TableCell>
+                    <TableCell align="right" sx={tableCellStyle}>
+                      {auction.currentPrice}
+                    </TableCell>
+                    <TableCell align="right" sx={tableCellStyle}>
+                      {auction.reservePrice}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>
       </Box>
       <Box sx={paginationStyle}>
-        <ButtonGroup variant='outlined' size='medium'>
-          <Button
-            disabled={pageNumber === 1}
-            onClick={(e) => clickPageNumberButton(pageNumber - 1)}
-          >
+        <ButtonGroup variant="outlined" size="medium">
+          <Button disabled={pageNumber === 1} onClick={() => clickPageNumberButton(pageNumber - 1)}>
             Prev
           </Button>
           {pageNumbers.map((num) => {
@@ -158,7 +179,7 @@ const Board = (props) => {
               <Button
                 key={num}
                 disabled={pageNumber === num}
-                onClick={(e) => clickPageNumberButton(num)}
+                onClick={() => clickPageNumberButton(num)}
               >
                 {num}
               </Button>
@@ -166,7 +187,7 @@ const Board = (props) => {
           })}
           <Button
             disabled={pageNumber === pageNumbers[pageNumbers.length - 1]}
-            onClick={(e) => clickPageNumberButton(pageNumber + 1)}
+            onClick={() => clickPageNumberButton(pageNumber + 1)}
           >
             Next
           </Button>

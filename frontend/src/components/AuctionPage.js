@@ -4,23 +4,23 @@ import { useSelector } from 'react-redux';
 import { Paper, Box, Typography, Divider, TextField, Button } from '@mui/material';
 
 // Styling
-import { 
-  auctionTitleContainerStyle, 
-  aunctionContentStyle, 
-  aunctionInfoAreaStyle, 
+import {
+  auctionTitleContainerStyle,
+  aunctionContentStyle,
+  aunctionInfoAreaStyle,
   auctionLiveInfoStyle,
-  bidAreaStyle, 
-  containerStyle, 
-  fieldStyle, 
-  paperStyle } from './css/auctionPage';
+  bidAreaStyle,
+  containerStyle,
+  fieldStyle,
+  paperStyle,
+} from './css/auctionPage';
 
 import { getDutchAuctionContract, getTokenContract } from '../utils/contract';
-import {convertUnixTimeToMinutes} from '../utils/utils'
+import { convertUnixTimeToMinutes } from '../utils/utils';
 import LoadingDisplay from './LoadingDisplay';
 import { ethers } from 'ethers';
 
-
-const AuctionPage = (props) => {
+const AuctionPage = () => {
   const [loading, setLoading] = useState(true);
   const currentURL = window.location.href;
   const auctionAddress = currentURL.split('/')[4];
@@ -49,13 +49,13 @@ const AuctionPage = (props) => {
       const tokenContract = getTokenContract(tokenAdd);
       const tokenName = await tokenContract.name();
       const tokenTicker = await tokenContract.symbol();
-      
+
       // Auction info
       const seller = await dutchAuctionContract.seller();
       const tokenQty = parseInt((await dutchAuctionContract.tokenQty())._hex);
       const startingPrice = parseInt((await dutchAuctionContract.startingPrice())._hex);
       const isActive = await dutchAuctionContract.active();
-      const reservePrice = parseInt((await dutchAuctionContract.getReservePrice())._hex)
+      const reservePrice = parseInt((await dutchAuctionContract.getReservePrice())._hex);
 
       const newAuction = {
         ...auction,
@@ -65,7 +65,7 @@ const AuctionPage = (props) => {
         tokenQty: tokenQty,
         startingPrice: startingPrice,
         active: isActive,
-        reservePrice: reservePrice
+        reservePrice: reservePrice,
       };
 
       if (isActive) {
@@ -75,8 +75,8 @@ const AuctionPage = (props) => {
 
         const expiresAt = parseInt((await dutchAuctionContract.expiresAt())._hex);
         const currentTime = Math.floor(Date.now() / 1000);
-        const timeRemaining = Math.max((expiresAt - currentTime), 0);
-        newAuction.timeRemaining = convertUnixTimeToMinutes(timeRemaining)
+        const timeRemaining = Math.max(expiresAt - currentTime, 0);
+        newAuction.timeRemaining = convertUnixTimeToMinutes(timeRemaining);
 
         const currentPrice = parseInt((await dutchAuctionContract.getPrice(currentTime))._hex);
         newAuction.currentPrice = currentPrice;
@@ -84,14 +84,15 @@ const AuctionPage = (props) => {
 
       setAuction(newAuction);
     }
-    setLoading(true)
-    const interval = setInterval(() => { 
-      setCount(count + 1); 
+    setLoading(true);
+
+    setInterval(() => {
+      setCount(count + 1);
     }, 1000);
+
     getAuctionInfo();
     setLoading(false);
-  }
-  , [count]);
+  }, [count]);
 
   const dutchAuctionContract = getDutchAuctionContract(auctionAddress);
   async function startAuction() {
@@ -102,72 +103,75 @@ const AuctionPage = (props) => {
   const [bidAmount, setBidAmount] = useState();
   async function placeBid() {
     const currentTime = Math.floor(Date.now() / 1000);
-    await dutchAuctionContract.placeBid(currentTime, {value: ethers.utils.parseEther(bidAmount.toString())});
+    await dutchAuctionContract.placeBid(currentTime, {
+      value: ethers.utils.parseEther(bidAmount.toString()),
+    });
     setEnableBid(false);
   }
 
   return (
     <div>
-    {loading?(
-      <LoadingDisplay/>
-      ):(
+      {loading ? (
+        <LoadingDisplay />
+      ) : (
         <Box sx={containerStyle}>
-      <Paper sx={paperStyle}>
-        <Box sx={auctionTitleContainerStyle}>
-          <Typography variant='h4'>{auction.tokenName} - {auction.tokenTicker}</Typography>
-          <Typography sx={fieldStyle}>Seller Address: {auction.sellerAdd}</Typography>
-        </Box>
-        <Divider variant='middle' flexItem/>
-        <Box sx={aunctionContentStyle}>
-        <Box sx={aunctionInfoAreaStyle}>
-          <Typography sx={fieldStyle}>Started On: {auction.startedOn}</Typography>
-          <Typography sx={fieldStyle}>Token Quantity: {auction.tokenQty}</Typography>
-          <Typography sx={fieldStyle}>Starting Price: {auction.startingPrice}</Typography>
-          <Typography sx={fieldStyle}>Reserve Price: {auction.reservePrice}</Typography>
-        </Box>
+          <Paper sx={paperStyle}>
+            <Box sx={auctionTitleContainerStyle}>
+              <Typography variant="h4">
+                {auction.tokenName} - {auction.tokenTicker}
+              </Typography>
+              <Typography sx={fieldStyle}>Seller Address: {auction.sellerAdd}</Typography>
+            </Box>
+            <Divider variant="middle" flexItem />
+            <Box sx={aunctionContentStyle}>
+              <Box sx={aunctionInfoAreaStyle}>
+                <Typography sx={fieldStyle}>Started On: {auction.startedOn}</Typography>
+                <Typography sx={fieldStyle}>Token Quantity: {auction.tokenQty}</Typography>
+                <Typography sx={fieldStyle}>Starting Price: {auction.startingPrice}</Typography>
+                <Typography sx={fieldStyle}>Reserve Price: {auction.reservePrice}</Typography>
+              </Box>
 
-        <Divider variant='middle' orientation='vertical' flexItem/>
+              <Divider variant="middle" orientation="vertical" flexItem />
 
-        <Box sx={auctionLiveInfoStyle}>
-          <Typography sx={fieldStyle}>Time Remaining: {auction.timeRemaining}</Typography>
-          <Typography sx={fieldStyle}>Current Price: {auction.currentPrice}</Typography>
-          <Box sx={bidAreaStyle}>
-            {!(currentAccountAddress==auction.sellerAdd.toLowerCase())? (
-              <div>
-                <TextField
-                label='ETH'
-                size='small'
-                style={{width: '50%', marginRight: '1rem'}}
-                value={bidAmount}
-                disabled = {!auction.active || !enableBid || !currentAccountAddress}
-                onChange={(e) => setBidAmount(e.target.value)}
-                />
-                <Button
-                  variant='contained'
-                  color='primary'
-                  onClick={placeBid}
-                  disabled = {!auction.active || !enableBid || !currentAccountAddress}
-                >
-                  Place bid
-                </Button>
-              </div>
-            ):(
-              <Button
-                variant='contained'
-                color='warning'
-                onClick={startAuction}
-                disabled = {auction.active}
-              >
-                Start Auction
-              </Button>
-            )}
-          </Box>
+              <Box sx={auctionLiveInfoStyle}>
+                <Typography sx={fieldStyle}>Time Remaining: {auction.timeRemaining}</Typography>
+                <Typography sx={fieldStyle}>Current Price: {auction.currentPrice}</Typography>
+                <Box sx={bidAreaStyle}>
+                  {!(currentAccountAddress == auction.sellerAdd.toLowerCase()) ? (
+                    <div>
+                      <TextField
+                        label="ETH"
+                        size="small"
+                        style={{ width: '50%', marginRight: '1rem' }}
+                        value={bidAmount}
+                        disabled={!auction.active || !enableBid || !currentAccountAddress}
+                        onChange={(e) => setBidAmount(e.target.value)}
+                      />
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={placeBid}
+                        disabled={!auction.active || !enableBid || !currentAccountAddress}
+                      >
+                        Place bid
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      color="warning"
+                      onClick={startAuction}
+                      disabled={auction.active}
+                    >
+                      Start Auction
+                    </Button>
+                  )}
+                </Box>
+              </Box>
+            </Box>
+          </Paper>
         </Box>
-        </Box>
-      </Paper>
-    </Box>
-      )
-    }
+      )}
     </div>
   );
 };

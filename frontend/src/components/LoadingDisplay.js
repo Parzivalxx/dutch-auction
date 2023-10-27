@@ -7,7 +7,7 @@ const LoadingDisplay = () => {
       <img
         src={spinner}
         style={{ width: '100px', margin: 'auto', display: 'block' }}
-        alt='Loading...'
+        alt="Loading..."
       />
     </div>
   );

@@ -4,11 +4,11 @@ import './css/spinner.css';
 
 const Spinner = () => {
   return (
-    <div className='spinner'>
+    <div className="spinner">
       <img
         src={spinner}
         style={{ width: '200px', margin: 'auto', display: 'block' }}
-        alt='Loading...'
+        alt="Loading..."
       />
     </div>
   );

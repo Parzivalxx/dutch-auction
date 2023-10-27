@@ -27,5 +27,8 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: ['react', 'prettier'],
-  rules: { 'prettier/prettier': ['error', { singleQuote: true, endOfLine: 'auto' }] },
+  rules: {
+    'prettier/prettier': ['error', { singleQuote: true, endOfLine: 'auto' }],
+    'react/prop-types': 'off',
+  },
 };
