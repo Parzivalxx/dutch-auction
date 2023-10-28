@@ -1,5 +1,5 @@
 # Use an official Node.js runtime as the base image
-FROM node:18-alpine
+FROM node:18-alpine as build
 
 # Set the working directory in the container
 WORKDIR /app
@@ -13,8 +13,17 @@ RUN npm install
 # Copy the rest of the application code to the container
 COPY . .
 
-# Expose the port your Node.js application is listening on
-EXPOSE 3000
+# Build your application for production
+RUN npm run build
 
-# Command to start your Node.js application using server.js
-CMD ["npm", "start"]
+# Use a lightweight web server to serve the production build
+FROM nginx:alpine
+
+# Copy the production build from the previous stage to the web server's document root
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Expose the port the web server is listening on (usually port 80 by default)
+EXPOSE 80
+
+# Command to start the web server (typically done automatically by the web server image)
+CMD ["nginx", "-g", "daemon off;"]

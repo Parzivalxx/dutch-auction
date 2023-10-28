@@ -154,19 +154,16 @@ contract DutchAuction {
         return startingPrice - discount;
     }
 
-    function getCurrentTokenNetWorth(uint time_now) internal view returns (uint) {
+    function getCurrentTokenNetWorth(
+        uint time_now
+    ) internal view returns (uint) {
         uint currentPrice = getPrice(time_now);
         return currentPrice * tokenQty;
     }
 
-    function placeBid(uint time_now)
-        external
-        payable
-        onlyAfterStart
-        onlyBeforeEnd
-        onlyNotSeller
-        onlyActive
-    {
+    function placeBid(
+        uint time_now
+    ) external payable onlyAfterStart onlyBeforeEnd onlyNotSeller onlyActive {
         require(block.timestamp < expiresAt, "This auction has ended");
 
         address bidder = msg.sender;
@@ -218,7 +215,7 @@ contract DutchAuction {
         );
     }
 
-    function getReservePrice() public view returns (uint){
-        return startingPrice - DURATION*discountRate;
+    function getReservePrice() public view returns (uint) {
+        return startingPrice - DURATION * discountRate;
     }
 }
