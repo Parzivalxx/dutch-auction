@@ -4,6 +4,8 @@ FROM node:18-alpine as build
 # Set the working directory in the container
 WORKDIR /app
 
+ENV NODE_OPTIONS="--max_old_space_size=512"
+
 # Copy package.json and package-lock.json (if available)
 COPY package*.json ./
 
