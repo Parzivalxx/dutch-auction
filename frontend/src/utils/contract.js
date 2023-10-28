@@ -5,7 +5,7 @@ import Token from '../abis/Token.json';
 
 const abiDecoder = require('abi-decoder');
 const ethers = require('ethers');
-const provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
+const provider = new ethers.providers.Web3Provider(window.ethereum);
 const signer = provider.getSigner();
 
 export function getDutchAuctionFactoryContract() {
