@@ -8,12 +8,15 @@ import {
   getTokenFactoryContract,
   getTokenContract,
   decodeTransctionLogs,
+  exportTokenToMetaMask,
 } from '../utils/contract';
 import { modalStyle, modalContainterStyle } from './css/createAuction';
 import { useNavigate } from 'react-router-dom';
 
 const CreateAuctionModal = (props) => {
   const navigate = useNavigate();
+  const { BigNumber } = require('ethers');
+  const DECIMAL = BigNumber.from(10).pow(18);
   const { openModal, handleCloseModal } = props;
   const [formData, setFormData] = useState({
     tokenName: '',
@@ -21,12 +24,19 @@ const CreateAuctionModal = (props) => {
     tokenQty: '',
     startingPrice: '',
     discountRate: '',
+    tokenQtyDec: '',
   });
   const [enableDeployToken, setEnableDeployToken] = useState(false);
 
   const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    let { name, value } = e.target;
+    let newFormData = { ...formData };
+
+    if (name === 'tokenQty') {
+      newFormData.tokenQtyDec = BigNumber.from(value).mul(DECIMAL).toString();
+    }
+    newFormData[name] = value;
+    setFormData(newFormData);
   };
 
   function resetFormData() {
@@ -47,11 +57,12 @@ const CreateAuctionModal = (props) => {
   async function deployToken() {
     const name = formData.tokenName;
     const ticker = formData.tokenTicker;
-    const tokenQty = formData.tokenQty;
+    const tokenQty = formData.tokenQtyDec;
     const deployTokenTX = await tokenFactoryContract.deployToken(name, ticker, tokenQty);
     const rc = await deployTokenTX.wait();
     const rcLogs = decodeTransctionLogs(TokenFactory, rc.logs);
     const tokenAdd = rcLogs[0].events.find((e) => e.name === 'tokenAddress').value;
+    exportTokenToMetaMask(tokenAdd, ticker);
     setEnableDeployToken(false);
     return tokenAdd;
   }
@@ -73,7 +84,7 @@ const CreateAuctionModal = (props) => {
   }
 
   async function createAuction() {
-    const { tokenName, tokenTicker, tokenQty, startingPrice, discountRate } = formData;
+    const { tokenName, tokenTicker, tokenQty, startingPrice, discountRate, tokenQtyDec } = formData;
     const { isExist, tokenAdd } = await isTokenExist(tokenName, tokenTicker);
     if (!isExist) {
       setEnableDeployToken(true);
@@ -82,7 +93,7 @@ const CreateAuctionModal = (props) => {
 
     const deployAuctionTx = await dutchAuctionFactoryContract.deployAuction(
       tokenAdd,
-      tokenQty,
+      tokenQtyDec,
       startingPrice,
       discountRate,
     );

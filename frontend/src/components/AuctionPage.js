@@ -88,7 +88,7 @@ const AuctionPage = () => {
 
     setInterval(() => {
       setCount(count + 1);
-    }, 1000);
+    }, 10000);
 
     getAuctionInfo();
     setLoading(false);
@@ -96,7 +96,10 @@ const AuctionPage = () => {
 
   const dutchAuctionContract = getDutchAuctionContract(auctionAddress);
   async function startAuction() {
-    await dutchAuctionContract.startAuction();
+    setLoading(true);
+    const startAucTx = await dutchAuctionContract.startAuction();
+    await startAucTx.wait();
+    setLoading(false);
   }
 
   const [enableBid, setEnableBid] = useState(true);

@@ -47,3 +47,17 @@ export function decodeTransctionLogs(abi, tx_logs) {
   const decoded = abiDecoder.decodeLogs(tx_logs);
   return decoded;
 }
+
+export function exportTokenToMetaMask(tokenAdd, tokenTicker) {
+  window.ethereum.request({
+    method: 'wallet_watchAsset',
+    params: {
+      type: 'ERC20',
+      options: {
+        address: tokenAdd,
+        symbol: tokenTicker,
+        decimals: 18,
+      },
+    },
+  });
+}
