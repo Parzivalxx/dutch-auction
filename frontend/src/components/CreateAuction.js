@@ -106,7 +106,7 @@ const CreateAuctionModal = (props) => {
     await approveTx.wait();
     handleCloseModal();
     resetFormData();
-    navigate(`/auctions/${auctionAdd}`);
+    navigate(`/dutch-auction/auctions/${auctionAdd}`);
   }
 
   return (

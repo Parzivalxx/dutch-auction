@@ -41,13 +41,13 @@ const Nav = (props) => {
     <div className="nav">
       <div className="nav__group1">
         <div className="nav__image-container">
-          <RouterLink to="/">
-            <img className="nav__icon" src={logo} alt="navicon" href="/" />
+          <RouterLink to="/dutch-auction">
+            <img className="nav__icon" src={logo} alt="navicon" href="/dutch-auction" />
           </RouterLink>
         </div>
 
         <div className="nav__buttons">
-          <RouterLink to="/" style={{ textDecoration: 'none' }}>
+          <RouterLink to="/dutch-auction" style={{ textDecoration: 'none' }}>
             <Button>Home</Button>
           </RouterLink>
           <Button onClick={handleOpenModal}>Create Auction</Button>

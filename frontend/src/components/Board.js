@@ -57,7 +57,7 @@ const Board = () => {
   };
 
   const onRowClick = (address) => {
-    navigate(`/auctions/${address}`);
+    navigate(`/dutch-auction/auctions/${address}`);
   };
   const dutchAuctionFactoryContract = getDutchAuctionFactoryContract();
 
