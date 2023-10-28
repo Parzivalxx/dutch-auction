@@ -31,7 +31,7 @@ function min(uint256 a, uint256 b) pure returns (uint256) {
 }
 
 contract DutchAuction {
-    uint private constant DURATION = 20 minutes;
+    uint public constant DURATION = 20 minutes;
 
     IERC20 public immutable token;
     uint public immutable tokenQty;
@@ -148,18 +148,18 @@ contract DutchAuction {
         emit DespositTokens(msg.sender, tokenQty); //TODO: add tons of checks + tests
     }
 
-    function getPrice() public view returns (uint) {
-        uint timeElapsed = block.timestamp - startAt;
+    function getPrice(uint time_now) public view returns (uint) {
+        uint timeElapsed = time_now - startAt;
         uint discount = discountRate * timeElapsed;
         return startingPrice - discount;
     }
 
-    function getCurrentTokenNetWorth() internal view returns (uint) {
-        uint currentPrice = getPrice();
+    function getCurrentTokenNetWorth(uint time_now) internal view returns (uint) {
+        uint currentPrice = getPrice(time_now);
         return currentPrice * tokenQty;
     }
 
-    function placeBid()
+    function placeBid(uint time_now)
         external
         payable
         onlyAfterStart
@@ -171,7 +171,7 @@ contract DutchAuction {
 
         address bidder = msg.sender;
         uint bidValue = msg.value;
-        uint price = getPrice();
+        uint price = getPrice(time_now);
 
         require(
             bidValue >= price,
@@ -182,7 +182,7 @@ contract DutchAuction {
         emit LogBid(bidder, price);
 
         uint currentBidPool = bidQueue.currentBidPool();
-        uint currentTokenNetWorth = getCurrentTokenNetWorth();
+        uint currentTokenNetWorth = getCurrentTokenNetWorth(time_now);
         if (currentBidPool >= currentTokenNetWorth) {
             active = false;
             endAuction(currentTokenNetWorth);
@@ -216,5 +216,9 @@ contract DutchAuction {
             tokenQty - tokensUnallocated,
             pricePerToken
         );
+    }
+
+    function getReservePrice() public view returns (uint){
+        return startingPrice - DURATION*discountRate;
     }
 }

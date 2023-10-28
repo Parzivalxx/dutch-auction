@@ -1,25 +1,24 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { useState } from 'react';
 import './App.css';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+import Home from './components/Home';
+import Nav from './components/Nav';
+import AuctionPage from './components/AuctionPage';
+import CreateAuctionModal from './components/CreateAuction';
 
 function App() {
+  const [openModal, setOpenModal] = useState(false);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Nav openModal={openModal} handleOpenModal={() => setOpenModal(true)} />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/auctions/:auctionID" element={<AuctionPage />} />
+      </Routes>
+      <CreateAuctionModal openModal={openModal} handleCloseModal={() => setOpenModal(false)} />
+    </BrowserRouter>
   );
 }
 

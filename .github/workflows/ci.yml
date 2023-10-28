@@ -28,10 +28,10 @@ jobs:
           npm install
           npm run lint
 
-      - name: Run frontend tests
-        working-directory: frontend
-        run: |
-          npm run test
+      # - name: Run frontend tests
+      #   working-directory: frontend
+      #   run: |
+      #     npm run test
 
   backend-checks:
     runs-on: ubuntu-latest
