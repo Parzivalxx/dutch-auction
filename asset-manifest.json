@@ -1,16 +1,16 @@
 {
   "files": {
     "main.css": "/dutch-auction/static/css/main.47afff62.css",
-    "main.js": "/dutch-auction/static/js/main.029d3e15.js",
+    "main.js": "/dutch-auction/static/js/main.b6a7f59a.js",
     "static/js/787.3e07d644.chunk.js": "/dutch-auction/static/js/787.3e07d644.chunk.js",
     "static/media/nav-bar-banner.png": "/dutch-auction/static/media/nav-bar-banner.25c85d8926a43efcb16c.png",
     "index.html": "/dutch-auction/index.html",
     "main.47afff62.css.map": "/dutch-auction/static/css/main.47afff62.css.map",
-    "main.029d3e15.js.map": "/dutch-auction/static/js/main.029d3e15.js.map",
+    "main.b6a7f59a.js.map": "/dutch-auction/static/js/main.b6a7f59a.js.map",
     "787.3e07d644.chunk.js.map": "/dutch-auction/static/js/787.3e07d644.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.47afff62.css",
-    "static/js/main.029d3e15.js"
+    "static/js/main.b6a7f59a.js"
   ]
 }
