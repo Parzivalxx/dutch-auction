@@ -23,7 +23,7 @@ import { ethers } from 'ethers';
 const AuctionPage = () => {
   const [loading, setLoading] = useState(true);
   const currentURL = window.location.href;
-  const auctionAddress = currentURL.split('/')[4];
+  const auctionAddress = currentURL.split('/')[5];
   const currentAccountAddress = useSelector((state) => state.account.account_id);
 
   const [auction, setAuction] = useState({
