@@ -6,6 +6,6 @@ export const modalContainterStyle = {
 };
 
 export const modalStyle = {
-  width: '30%',
+  width: '35%',
   padding: '1rem',
 };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 // MUI Components
-import { Paper, Box, Typography, Divider, TextField, Button } from '@mui/material';
+import { Paper, Box, Typography, Divider, TextField, Button, Grid } from '@mui/material';
 
 // Styling
 import {
@@ -16,27 +16,34 @@ import {
 } from './css/auctionPage';
 
 import { getDutchAuctionContract, getTokenContract } from '../utils/contract';
-import { convertUnixTimeToMinutes } from '../utils/utils';
+import { auctionStatus, convertUnixTimeToMinutes, convertWeiToEth } from '../utils/utils';
 import LoadingDisplay from './LoadingDisplay';
 import { ethers } from 'ethers';
+
+import { accountBidded } from '../actions/accountActions';
 
 const AuctionPage = () => {
   const [loading, setLoading] = useState(true);
   const currentURL = window.location.href;
   const auctionAddress = currentURL.split('/')[5];
   const currentAccountAddress = useSelector((state) => state.account.account_id);
+  const currentAccountBidded = useSelector((state) => state.account.account_bidded);
+
+  const dispatch = useDispatch();
 
   const [auction, setAuction] = useState({
     tokenName: '',
     tokenTicker: '',
     sellerAdd: '',
-    startedOn: 'Not Started',
+    startedOn: 'NaN',
     tokenQty: '',
     startingPrice: '',
     reservePrice: 'NaN',
     currentPrice: 'NaN',
     timeRemaining: 'NaN',
+    status: 'NaN',
     active: false,
+    ended: false,
   });
   const [count, setCount] = useState(0);
 
@@ -52,10 +59,16 @@ const AuctionPage = () => {
 
       // Auction info
       const seller = await dutchAuctionContract.seller();
-      const tokenQty = parseInt((await dutchAuctionContract.tokenQty())._hex);
-      const startingPrice = parseInt((await dutchAuctionContract.startingPrice())._hex);
+      const tokenQty = convertWeiToEth(parseInt((await dutchAuctionContract.tokenQty())._hex));
+      const startingPrice = convertWeiToEth(
+        parseInt((await dutchAuctionContract.startingPrice())._hex),
+      );
       const isActive = await dutchAuctionContract.active();
-      const reservePrice = parseInt((await dutchAuctionContract.getReservePrice())._hex);
+      console.log(isActive);
+      const reservePrice = convertWeiToEth(
+        parseInt((await dutchAuctionContract.getReservePrice())._hex),
+      );
+      const auctionEnded = await dutchAuctionContract.ended();
 
       const newAuction = {
         ...auction,
@@ -65,7 +78,9 @@ const AuctionPage = () => {
         tokenQty: tokenQty,
         startingPrice: startingPrice,
         active: isActive,
+        ended: auctionEnded,
         reservePrice: reservePrice,
+        status: auctionStatus(isActive, auctionEnded),
       };
 
       if (isActive) {
@@ -78,7 +93,9 @@ const AuctionPage = () => {
         const timeRemaining = Math.max(expiresAt - currentTime, 0);
         newAuction.timeRemaining = convertUnixTimeToMinutes(timeRemaining);
 
-        const currentPrice = parseInt((await dutchAuctionContract.getPrice(currentTime))._hex);
+        const currentPrice = convertWeiToEth(
+          parseInt((await dutchAuctionContract.getPrice(currentTime))._hex),
+        );
         newAuction.currentPrice = currentPrice;
       }
 
@@ -102,15 +119,20 @@ const AuctionPage = () => {
     setLoading(false);
   }
 
-  const [enableBid, setEnableBid] = useState(true);
   const [bidAmount, setBidAmount] = useState();
   async function placeBid() {
     const currentTime = Math.floor(Date.now() / 1000);
     await dutchAuctionContract.placeBid(currentTime, {
       value: ethers.utils.parseEther(bidAmount.toString()),
     });
-    setEnableBid(false);
+    dispatch(accountBidded(true));
   }
+
+  const [enableBid, setEnableBid] = useState(true);
+  useEffect(() => {
+    const newEnableBid = Boolean(auction.active && !currentAccountBidded && currentAccountAddress);
+    setEnableBid(newEnableBid);
+  }, [auction, accountBidded, currentAccountAddress]);
 
   return (
     <div>
@@ -128,17 +150,63 @@ const AuctionPage = () => {
             <Divider variant="middle" flexItem />
             <Box sx={aunctionContentStyle}>
               <Box sx={aunctionInfoAreaStyle}>
-                <Typography sx={fieldStyle}>Started On: {auction.startedOn}</Typography>
-                <Typography sx={fieldStyle}>Token Quantity: {auction.tokenQty}</Typography>
-                <Typography sx={fieldStyle}>Starting Price: {auction.startingPrice}</Typography>
-                <Typography sx={fieldStyle}>Reserve Price: {auction.reservePrice}</Typography>
+                <Grid container>
+                  <Grid item xs={8}>
+                    <Typography sx={fieldStyle}>Status:</Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography sx={fieldStyle}>{auction.status}</Typography>
+                  </Grid>
+                  <Grid item xs={8}>
+                    <Typography sx={fieldStyle}>Token Quantity ({auction.tokenTicker}):</Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography sx={fieldStyle}>{auction.tokenQty}</Typography>
+                  </Grid>
+                  <Grid item xs={8}>
+                    <Typography sx={fieldStyle}>
+                      Starting Price (ETH/{auction.tokenTicker}):
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography sx={fieldStyle}>{auction.startingPrice}</Typography>
+                  </Grid>
+                  <Grid item xs={8}>
+                    <Typography sx={fieldStyle}>
+                      Reserve Price (ETH/{auction.tokenTicker}):
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography sx={fieldStyle}>{auction.reservePrice}</Typography>
+                  </Grid>
+                </Grid>
               </Box>
 
               <Divider variant="middle" orientation="vertical" flexItem />
 
               <Box sx={auctionLiveInfoStyle}>
-                <Typography sx={fieldStyle}>Time Remaining: {auction.timeRemaining}</Typography>
-                <Typography sx={fieldStyle}>Current Price: {auction.currentPrice}</Typography>
+                <Grid container>
+                  <Grid item xs={8}>
+                    <Typography sx={fieldStyle}>Started On:</Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography sx={fieldStyle}>{auction.startedOn}</Typography>
+                  </Grid>
+                  <Grid item xs={8}>
+                    <Typography sx={fieldStyle}>Time Remaining:</Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography sx={fieldStyle}>{auction.timeRemaining}</Typography>
+                  </Grid>
+                  <Grid item xs={8}>
+                    <Typography sx={fieldStyle}>
+                      Current Price (ETH/{auction.tokenTicker}):
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography sx={fieldStyle}>{auction.currentPrice}</Typography>
+                  </Grid>
+                </Grid>
                 <Box sx={bidAreaStyle}>
                   {!(currentAccountAddress == auction.sellerAdd.toLowerCase()) ? (
                     <div>
@@ -147,14 +215,14 @@ const AuctionPage = () => {
                         size="small"
                         style={{ width: '50%', marginRight: '1rem' }}
                         value={bidAmount}
-                        disabled={!auction.active || !enableBid || !currentAccountAddress}
+                        disabled={!enableBid}
                         onChange={(e) => setBidAmount(e.target.value)}
                       />
                       <Button
                         variant="contained"
                         color="primary"
                         onClick={placeBid}
-                        disabled={!auction.active || !enableBid || !currentAccountAddress}
+                        disabled={!enableBid}
                       >
                         Place bid
                       </Button>

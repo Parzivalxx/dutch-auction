@@ -43,6 +43,7 @@ contract DutchAuction {
     uint public startAt;
     uint public expiresAt;
     bool public active;
+    bool public ended;
 
     uint private tokenNetWorthPool;
     uint private currentBidNetWorthPool;
@@ -149,6 +150,10 @@ contract DutchAuction {
     }
 
     function getPrice(uint time_now) public view returns (uint) {
+        if (time_now < startAt) return startingPrice;
+        if (time_now >= expiresAt) {
+            return getReservePrice();
+        }
         uint timeElapsed = time_now - startAt;
         uint discount = discountRate * timeElapsed;
         return startingPrice - discount;
@@ -181,7 +186,6 @@ contract DutchAuction {
         uint currentBidPool = bidQueue.currentBidPool();
         uint currentTokenNetWorth = getCurrentTokenNetWorth(time_now);
         if (currentBidPool >= currentTokenNetWorth) {
-            active = false;
             endAuction(currentTokenNetWorth);
         }
     }
@@ -207,6 +211,8 @@ contract DutchAuction {
             }
             emit SuccessfulBid(bidder, qtyAllocated, remainder);
         }
+        active = false;
+        ended = true;
         seller.transfer(address(this).balance);
         emit EndOfAuction(
             block.timestamp,
@@ -217,5 +223,12 @@ contract DutchAuction {
 
     function getReservePrice() public view returns (uint) {
         return startingPrice - DURATION * discountRate;
+    }
+
+    function auctionStatus(uint time_now) public returns (bool){
+        if (time_now >= expiresAt) {
+            endAuction(getCurrentTokenNetWorth(time_now));
+        }
+        return active;
     }
 }

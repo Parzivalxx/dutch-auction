@@ -1,5 +1,6 @@
 const initialState = {
   account_id: null,
+  account_bidded: false,
 };
 
 export const accountReducer = (state = initialState, action) => {
@@ -8,6 +9,11 @@ export const accountReducer = (state = initialState, action) => {
       return {
         ...state,
         account_id: action.payload,
+      };
+    case 'ACCOUNT_BIDDED':
+      return {
+        ...state,
+        account_bidded: action.payload,
       };
     default:
       return state;

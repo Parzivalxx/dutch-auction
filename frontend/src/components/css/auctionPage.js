@@ -19,6 +19,7 @@ export const auctionTitleContainerStyle = {
 
 export const aunctionContentStyle = {
   display: 'flex',
+  minHeight: '16rem',
 };
 
 export const aunctionInfoAreaStyle = {
@@ -34,7 +35,7 @@ export const auctionLiveInfoStyle = {
 
 export const fieldStyle = {
   fontSize: '1.25rem',
-  margin: '0.5rem',
+  margin: '0.25rem',
 };
 
 export const bidAreaStyle = {

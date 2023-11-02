@@ -31,9 +31,4 @@ const ErrorAlert = (props) =>
     </Box>
   ));
 
-// const mapStateToProps = (state) => ({
-//   alerts: state.alert,
-// });
-
-// export default connect(mapStateToProps, { removeAlert })(ErrorAlert);
 export default ErrorAlert;

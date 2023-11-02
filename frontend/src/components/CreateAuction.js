@@ -12,11 +12,10 @@ import {
 } from '../utils/contract';
 import { modalStyle, modalContainterStyle } from './css/createAuction';
 import { useNavigate } from 'react-router-dom';
+import { convertEthToWei } from '../utils/utils';
 
 const CreateAuctionModal = (props) => {
   const navigate = useNavigate();
-  const { BigNumber } = require('ethers');
-  const DECIMAL = BigNumber.from(10).pow(18);
   const { openModal, handleCloseModal } = props;
   const [formData, setFormData] = useState({
     tokenName: '',
@@ -24,17 +23,12 @@ const CreateAuctionModal = (props) => {
     tokenQty: '',
     startingPrice: '',
     discountRate: '',
-    tokenQtyDec: '',
   });
   const [enableDeployToken, setEnableDeployToken] = useState(false);
 
   const handleFormChange = (e) => {
     let { name, value } = e.target;
     let newFormData = { ...formData };
-
-    if (name === 'tokenQty') {
-      newFormData.tokenQtyDec = BigNumber.from(value).mul(DECIMAL).toString();
-    }
     newFormData[name] = value;
     setFormData(newFormData);
   };
@@ -57,7 +51,7 @@ const CreateAuctionModal = (props) => {
   async function deployToken() {
     const name = formData.tokenName;
     const ticker = formData.tokenTicker;
-    const tokenQty = formData.tokenQtyDec;
+    const tokenQty = convertEthToWei(formData.tokenQty);
     const deployTokenTX = await tokenFactoryContract.deployToken(name, ticker, tokenQty);
     const rc = await deployTokenTX.wait();
     const rcLogs = decodeTransctionLogs(TokenFactory, rc.logs);
@@ -70,7 +64,6 @@ const CreateAuctionModal = (props) => {
   async function isTokenExist(name, ticker) {
     const tokenCount = await tokenFactoryContract.tokenCount();
     const tokenCountInt = parseInt(tokenCount._hex);
-    console.log(tokenCountInt);
     for (let i = 0; i < tokenCountInt; i++) {
       const tokenAdd = await tokenFactoryContract.tokens(i);
       const tokenContract = getTokenContract(tokenAdd);
@@ -84,25 +77,25 @@ const CreateAuctionModal = (props) => {
   }
 
   async function createAuction() {
-    const { tokenName, tokenTicker, tokenQty, startingPrice, discountRate, tokenQtyDec } = formData;
+    const { tokenName, tokenTicker, tokenQty, startingPrice, discountRate } = formData;
     const { isExist, tokenAdd } = await isTokenExist(tokenName, tokenTicker);
     if (!isExist) {
       setEnableDeployToken(true);
       return;
     }
-
+    console.log(convertEthToWei(tokenQty));
     const deployAuctionTx = await dutchAuctionFactoryContract.deployAuction(
       tokenAdd,
-      tokenQtyDec,
-      startingPrice,
-      discountRate,
+      convertEthToWei(tokenQty),
+      convertEthToWei(startingPrice),
+      convertEthToWei(discountRate),
     );
     const rc = await deployAuctionTx.wait();
     const rcLogs = decodeTransctionLogs(DutchAuctionFactory, rc.logs);
     const auctionAdd = rcLogs[0].events.find((e) => e.name === 'auctionAddress').value;
 
     const tokenContract = getTokenContract(tokenAdd);
-    const approveTx = await tokenContract.approve(auctionAdd, tokenQty);
+    const approveTx = await tokenContract.approve(auctionAdd, convertEthToWei(tokenQty));
     await approveTx.wait();
     handleCloseModal();
     resetFormData();
@@ -151,7 +144,7 @@ const CreateAuctionModal = (props) => {
           <Grid item xs={4}>
             <TextField
               fullWidth
-              label="Starting Price"
+              label="Starting Price (ETH)"
               name="startingPrice"
               type="number"
               value={formData.startingPrice}
@@ -161,7 +154,7 @@ const CreateAuctionModal = (props) => {
           <Grid item xs={4}>
             <TextField
               fullWidth
-              label="Discount Rate"
+              label="Discount Rate (ETH)"
               name="discountRate"
               type="number"
               value={formData.discountRate}
