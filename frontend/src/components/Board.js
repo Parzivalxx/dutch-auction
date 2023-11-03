@@ -69,11 +69,10 @@ const Board = () => {
         const auction_address = await dutchAuctionFactoryContract.auctions(i);
         const auctionContract = getDutchAuctionContract(auction_address);
 
+        const auctionStatus = await auctionContract.auctionStatus();
         const auctionStartPrice = convertWeiToEth(
           parseInt((await auctionContract.startingPrice())._hex),
         );
-        const auctionActive = await auctionContract.active();
-        const auctionEnded = await auctionContract.ended();
         const auctionReservePrice = convertWeiToEth(
           parseInt((await auctionContract.getReservePrice())._hex),
         );
@@ -83,7 +82,7 @@ const Board = () => {
           startPrice: auctionStartPrice,
           currentPrice: auctionStartPrice,
           remainingTime: 'NaN',
-          status: auctionStatus(auctionActive, auctionEnded),
+          status: auctionStatus,
           reservePrice: auctionReservePrice,
         };
 

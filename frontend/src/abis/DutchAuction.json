@@ -93,27 +93,14 @@
   },
   {
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "_time",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "_qtySold",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "_salePrice",
-        "type": "uint256"
-      }
-    ],
-    "name": "EndOfAuction",
+    "inputs": [],
+    "name": "EndCommitStage",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [],
+    "name": "EndRevealStage",
     "type": "event"
   },
   {
@@ -168,7 +155,7 @@
   },
   {
     "inputs": [],
-    "name": "DURATION",
+    "name": "AUCTION_DURATION",
     "outputs": [
       {
         "internalType": "uint256",
@@ -181,15 +168,28 @@
   },
   {
     "inputs": [],
-    "name": "active",
+    "name": "REVEAL_DURATION",
     "outputs": [
       {
-        "internalType": "bool",
+        "internalType": "uint256",
         "name": "",
-        "type": "bool"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_submarine",
+        "type": "address"
+      }
+    ],
+    "name": "addSubmarineToList",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -203,9 +203,9 @@
     "name": "auctionStatus",
     "outputs": [
       {
-        "internalType": "bool",
+        "internalType": "enum DutchAuction.Status",
         "name": "",
-        "type": "bool"
+        "type": "uint8"
       }
     ],
     "stateMutability": "nonpayable",
@@ -226,20 +226,14 @@
   },
   {
     "inputs": [],
-    "name": "ended",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "distributeToken",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "expiresAt",
+    "name": "endAt",
     "outputs": [
       {
         "internalType": "uint256",
@@ -283,16 +277,16 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "revealAt",
+    "outputs": [
       {
         "internalType": "uint256",
-        "name": "time_now",
+        "name": "",
         "type": "uint256"
       }
     ],
-    "name": "placeBid",
-    "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
