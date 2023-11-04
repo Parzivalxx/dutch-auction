@@ -8,7 +8,7 @@ interface ISubmarine {
 }
 
 interface IDutchAuction{
-    function addSubmarineToQueue(address _submarine) external;
+    function addSubmarineToList(address _submarine) external;
 }
 
 // Reveal Contract
@@ -34,7 +34,7 @@ contract Reveal {
     // Ensure owner of submarine contract is also the message sender
     require (subOwner == msg.sender, "Owner error");
 
-    IDutchAuction(dutchAuctionAdd).addSubmarineToQueue(submarineAddress);
+    IDutchAuction(dutchAuctionAdd).addSubmarineToList(submarineAddress);
     
   }
 }

@@ -7,7 +7,7 @@ export const containerStyle = {
 export const paperStyle = {
   display: 'flex',
   flexDirection: 'column',
-  width: '50%',
+  width: '60%',
 };
 
 export const auctionTitleContainerStyle = {

@@ -200,7 +200,7 @@
         "type": "uint256"
       }
     ],
-    "name": "auctionStatus",
+    "name": "auctionStatusPred",
     "outputs": [
       {
         "internalType": "enum DutchAuction.Status",
@@ -208,7 +208,7 @@
         "type": "uint8"
       }
     ],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -242,6 +242,32 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "time_now",
+        "type": "uint256"
+      }
+    ],
+    "name": "endCommitStage",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "time_now",
+        "type": "uint256"
+      }
+    ],
+    "name": "endReavealStage",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

@@ -7,7 +7,7 @@
         "type": "address"
       }
     ],
-    "name": "addSubmarineToQueue",
+    "name": "addSubmarineToList",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

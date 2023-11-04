@@ -184,12 +184,14 @@ contract DutchAuction {
         return currentPrice * tokenQty;
     }
 
-    function endCommitStage() internal onlyActive {
+    function endCommitStage(uint time_now) public onlyActive {
+        require(time_now >= revealAt, "Commit stage is not ended yet");
         status = Status.Revealing;
         emit EndCommitStage();
     }
 
-    function endReavealStage() internal onlyRevealing {
+    function endReavealStage(uint time_now) public onlyRevealing {
+        require(time_now >= endAt, "Reveal stage is not ended yet");
         distributeToken();
         status = Status.Ended;
         emit EndRevealStage();
@@ -199,22 +201,19 @@ contract DutchAuction {
         return startingPrice - AUCTION_DURATION * discountRate;
     }
 
-    function auctionStatus(uint time_now) public returns (Status){
+    function auctionStatusPred(uint time_now) view public returns (Status){
         // function for polling
+        Status predStatus;
         if (startAt == 0){
-            status = Status.NotStarted;
+            predStatus = Status.NotStarted;
         }else if (time_now >= startAt && time_now < revealAt){
-            status = Status.Active;
+            predStatus = Status.Active;
         }else if (time_now >= revealAt && time_now < endAt){
-            if (status == Status.Active){
-                endCommitStage();
-            }
+            predStatus = Status.Revealing;
         }else if (time_now >= endAt){
-            if (status == Status.Revealing){
-                endReavealStage();
-            }
+            predStatus = Status.Ended;
         }
-        return status;
+        return predStatus;
     }
 
     function addSubmarineToList(address _submarine) public onlySeller {

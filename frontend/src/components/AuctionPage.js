@@ -16,18 +16,30 @@ import {
 } from './css/auctionPage';
 
 import { getDutchAuctionContract, getTokenContract } from '../utils/contract';
-import { auctionStatus, convertUnixTimeToMinutes, convertWeiToEth } from '../utils/utils';
+import {
+  auctionStatusText,
+  convertUnixTimeToMinutes,
+  convertWeiToEth,
+  getCurrentAccount,
+} from '../utils/utils';
 import LoadingDisplay from './LoadingDisplay';
-import { ethers } from 'ethers';
 
 import { accountBidded } from '../actions/accountActions';
+import {
+  createSubmarineContract,
+  getSubmarineBalance,
+  sendEthertoSubmarine,
+} from '../utils/submarine';
 
 const AuctionPage = () => {
   const [loading, setLoading] = useState(true);
   const currentURL = window.location.href;
   const auctionAddress = currentURL.split('/')[5];
-  const currentAccountAddress = useSelector((state) => state.account.account_id);
-  const currentAccountBidded = useSelector((state) => state.account.account_bidded);
+  const accounts = useSelector((state) => state.accountsState.accounts);
+  console.log(accounts);
+  const currentAccount = getCurrentAccount(accounts);
+  const currentAccountAddress = currentAccount?.account_id;
+  const currentAccountAuctions = currentAccount?.auctionsBidded;
 
   const dispatch = useDispatch();
 
@@ -41,15 +53,14 @@ const AuctionPage = () => {
     reservePrice: 'NaN',
     currentPrice: 'NaN',
     timeRemaining: 'NaN',
-    status: 'NaN',
-    active: false,
-    ended: false,
+    status: 0,
   });
   const [count, setCount] = useState(0);
 
   useEffect(() => {
     async function getAuctionInfo() {
       const dutchAuctionContract = getDutchAuctionContract(auctionAddress);
+      const currentTime = Math.floor(Date.now() / 1000);
 
       // Token info
       const tokenAdd = await dutchAuctionContract.token();
@@ -63,13 +74,12 @@ const AuctionPage = () => {
       const startingPrice = convertWeiToEth(
         parseInt((await dutchAuctionContract.startingPrice())._hex),
       );
-      const isActive = await dutchAuctionContract.active();
-      console.log(isActive);
+
       const reservePrice = convertWeiToEth(
         parseInt((await dutchAuctionContract.getReservePrice())._hex),
       );
-      const auctionEnded = await dutchAuctionContract.ended();
 
+      const auctionStatus = await dutchAuctionContract.auctionStatusPred(currentTime);
       const newAuction = {
         ...auction,
         tokenName: tokenName,
@@ -77,20 +87,19 @@ const AuctionPage = () => {
         sellerAdd: seller,
         tokenQty: tokenQty,
         startingPrice: startingPrice,
-        active: isActive,
-        ended: auctionEnded,
         reservePrice: reservePrice,
-        status: auctionStatus(isActive, auctionEnded),
+        status: auctionStatus,
       };
 
-      if (isActive) {
+      if (auctionStatus != 0) {
         const startAt = parseInt((await dutchAuctionContract.startAt())._hex);
         const startedOn = new Date(startAt * 1000).toLocaleString();
         newAuction.startedOn = startedOn;
+      }
 
-        const expiresAt = parseInt((await dutchAuctionContract.expiresAt())._hex);
-        const currentTime = Math.floor(Date.now() / 1000);
-        const timeRemaining = Math.max(expiresAt - currentTime, 0);
+      if (auctionStatus == 1) {
+        const revealAt = parseInt((await dutchAuctionContract.revealAt())._hex);
+        const timeRemaining = Math.max(revealAt - currentTime, 0);
         newAuction.timeRemaining = convertUnixTimeToMinutes(timeRemaining);
 
         const currentPrice = convertWeiToEth(
@@ -121,16 +130,27 @@ const AuctionPage = () => {
 
   const [bidAmount, setBidAmount] = useState();
   async function placeBid() {
-    const currentTime = Math.floor(Date.now() / 1000);
-    await dutchAuctionContract.placeBid(currentTime, {
-      value: ethers.utils.parseEther(bidAmount.toString()),
-    });
-    dispatch(accountBidded(true));
+    const submarineAddresss = await createSubmarineContract();
+    console.log(submarineAddresss);
+    dispatch(accountBidded(currentAccountAddress, auctionAddress, submarineAddresss));
+    await sendEthertoSubmarine(submarineAddresss, bidAmount);
+    const submarineBalance = await getSubmarineBalance(submarineAddresss);
+    console.log(submarineBalance);
   }
 
   const [enableBid, setEnableBid] = useState(true);
   useEffect(() => {
-    const newEnableBid = Boolean(auction.active && !currentAccountBidded && currentAccountAddress);
+    //Loop through currentAccountAuctions to check if currentAccountAddress has bidded;
+    let bidded = false;
+    console.log(currentAccountAuctions);
+    if (currentAccountAuctions) {
+      currentAccountAuctions.map((auction) => {
+        if (auction.auctionAdd.toLowerCase() == auctionAddress.toLowerCase()) {
+          bidded = true;
+        }
+      });
+    }
+    const newEnableBid = Boolean(auction.status == 1 && !bidded && currentAccountAddress);
     setEnableBid(newEnableBid);
   }, [auction, accountBidded, currentAccountAddress]);
 
@@ -155,7 +175,7 @@ const AuctionPage = () => {
                     <Typography sx={fieldStyle}>Status:</Typography>
                   </Grid>
                   <Grid item xs={4}>
-                    <Typography sx={fieldStyle}>{auction.status}</Typography>
+                    <Typography sx={fieldStyle}>{auctionStatusText(auction.status)}</Typography>
                   </Grid>
                   <Grid item xs={8}>
                     <Typography sx={fieldStyle}>Token Quantity ({auction.tokenTicker}):</Typography>
@@ -232,7 +252,7 @@ const AuctionPage = () => {
                       variant="contained"
                       color="warning"
                       onClick={startAuction}
-                      disabled={auction.active}
+                      disabled={auction.status != 0}
                     >
                       Start Auction
                     </Button>

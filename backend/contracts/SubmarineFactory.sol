@@ -90,8 +90,10 @@ contract SubmarineFactory {
         revealContractAddr = _revealContract;
     }
 
+    event SubmarineCreated(address indexed owner, address indexed submarine);
+
     // Create Sub Contract
-    function createSubContract(address payable _owner) public {
+    function createSubContract(address payable _owner) public returns (address){
 
         // Get byteCode for storing in the reveal contract
         bytes32 byteCode = keccak256(abi.encodePacked(type(Submarine).creationCode, abi.encode(_owner, revealContractAddr)));
@@ -105,6 +107,8 @@ contract SubmarineFactory {
 
         // Store address
         submarines[_owner] = address(sub);
+        emit SubmarineCreated(_owner, address(sub));
+        return address(sub);
     }
 
     // Get ByteCode

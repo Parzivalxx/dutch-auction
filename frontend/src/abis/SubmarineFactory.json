@@ -11,6 +11,25 @@
     "type": "constructor"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "submarine",
+        "type": "address"
+      }
+    ],
+    "name": "SubmarineCreated",
+    "type": "event"
+  },
+  {
     "inputs": [
       {
         "internalType": "address payable",
@@ -19,7 +38,13 @@
       }
     ],
     "name": "createSubContract",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },

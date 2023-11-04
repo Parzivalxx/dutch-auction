@@ -29,13 +29,14 @@ async function main() {
   const deployedReveal = await RevealContract.deploy();
   await deployedReveal.waitForDeployment();
 
-  const SubmarineFactory = await ethers.getContractFactory("SubmarineFactory");
+  const SubmarineFactory = await hre.ethers.getContractFactory("SubmarineFactory");
   const deployedSubFactory = await SubmarineFactory.deploy(deployedReveal.target);
   await deployedSubFactory.waitForDeployment();
 
   dutchAuctionAddress = dutchAuctionFactory.target;
   tokenAddress = tokenFactory.target;
-  subFactoryAddress = revealAddress = deployedReveal.target;
+  subFactoryAddress = deployedSubFactory.target;
+  revealAddress = deployedReveal.target;
 
   console.log("DutchAuctionFactory deployed at:", dutchAuctionAddress);
   console.log("TokenFactory deployed at:", tokenAddress);
