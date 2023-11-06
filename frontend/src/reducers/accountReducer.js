@@ -53,12 +53,29 @@ export const accountsReducer = (state = initialState, action) => {
             {
               auctionAdd: action.payload.auctionAdd,
               submarineAdd: action.payload.submarineAdd,
+              revealed: false,
             },
           ];
           return { ...account, auctionsBidded: newAuctions };
         }
         return account;
       });
+      return { ...state, accounts: newAccounts };
+    }
+    case 'ACCOUNT_REVEALED': {
+      newAccounts = state.accounts.map((account) => {
+        if (account && account.account_id === action.payload.account_id) {
+          const newAuctionsBidded = account.auctionsBidded.map((auction) => {
+            if (auction.auctionAdd === action.payload.auctionAdd) {
+              return { ...auction, revealed: true };
+            }
+            return auction;
+          });
+          return { ...account, auctionsBidded: newAuctionsBidded };
+        }
+        return account;
+      });
+
       return { ...state, accounts: newAccounts };
     }
     default:

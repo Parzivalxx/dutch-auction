@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ethers } from 'ethers';
 
 // MUI
 import {
@@ -73,10 +74,10 @@ const Board = () => {
         const auctionStatus = await auctionContract.auctionStatusPred(currentTime);
         console.log(auctionStatus);
         const auctionStartPrice = convertWeiToEth(
-          parseInt((await auctionContract.startingPrice())._hex),
+          ethers.BigNumber.from((await auctionContract.startingPrice())._hex),
         );
         const auctionReservePrice = convertWeiToEth(
-          parseInt((await auctionContract.getReservePrice())._hex),
+          ethers.BigNumber.from((await auctionContract.getReservePrice())._hex),
         );
 
         let auction = {
@@ -90,7 +91,7 @@ const Board = () => {
 
         if (auctionStatus == 1) {
           const auctionCurrentPrice = convertWeiToEth(
-            parseInt((await auctionContract.getPrice(currentTime))._hex),
+            ethers.BigNumber.from((await auctionContract.getPrice(currentTime))._hex),
           );
           auction.currentPrice = auctionCurrentPrice;
 

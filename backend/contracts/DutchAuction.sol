@@ -38,8 +38,8 @@ function min(uint256 a, uint256 b) pure returns (uint256) {
 }
 
 contract DutchAuction {
-    uint public constant AUCTION_DURATION = 20 minutes;
-    uint public constant REVEAL_DURATION = 10 minutes;
+    uint public constant AUCTION_DURATION = 2 minutes;
+    uint public constant REVEAL_DURATION = 30 minutes;
 
     IERC20 public immutable token;
     uint public immutable tokenQty;
@@ -216,7 +216,7 @@ contract DutchAuction {
         return predStatus;
     }
 
-    function addSubmarineToList(address _submarine) public onlySeller {
+    function addSubmarineToList(address _submarine) public {
         submarineList.push(_submarine);
         for (uint i = submarineList.length - 1; i > 0; i--) {
             ISubmarine submarine = ISubmarine(submarineList[i]);
@@ -229,6 +229,10 @@ contract DutchAuction {
                 break;
             }
         }
+    }
+
+    function getSubmarineList() public view returns (address[] memory) {
+        return submarineList;
     }
 
     function distributeToken() public payable onlyRevealing {

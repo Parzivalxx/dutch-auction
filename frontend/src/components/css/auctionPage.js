@@ -35,7 +35,7 @@ export const auctionLiveInfoStyle = {
 
 export const fieldStyle = {
   fontSize: '1.25rem',
-  margin: '0.25rem',
+  marginBottom: '2rem',
 };
 
 export const bidAreaStyle = {
@@ -43,4 +43,5 @@ export const bidAreaStyle = {
   bottom: '0',
   marginBottom: '1.5rem',
   marginLeft: '0.5rem',
+  marginTop: '1rem',
 };

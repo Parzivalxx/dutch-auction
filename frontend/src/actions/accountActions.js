@@ -22,3 +22,13 @@ export const accountBidded = (account_id, auctionAdd, submarineAdd) => {
     },
   };
 };
+
+export const accountRevealed = (account_id, auctionAdd) => {
+  return {
+    type: 'ACCOUNT_REVEALED',
+    payload: {
+      account_id: account_id,
+      auctionAdd: auctionAdd,
+    },
+  };
+};

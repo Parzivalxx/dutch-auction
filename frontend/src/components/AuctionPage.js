@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { ethers } from 'ethers';
 // MUI Components
 import { Paper, Box, Typography, Divider, TextField, Button, Grid } from '@mui/material';
 
@@ -24,7 +25,7 @@ import {
 } from '../utils/utils';
 import LoadingDisplay from './LoadingDisplay';
 
-import { accountBidded } from '../actions/accountActions';
+import { accountBidded, accountRevealed } from '../actions/accountActions';
 import {
   createSubmarineContract,
   getSubmarineBalance,
@@ -36,7 +37,7 @@ const AuctionPage = () => {
   const currentURL = window.location.href;
   const auctionAddress = currentURL.split('/')[5];
   const accounts = useSelector((state) => state.accountsState.accounts);
-  console.log(accounts);
+  // console.log(accounts);
   const currentAccount = getCurrentAccount(accounts);
   const currentAccountAddress = currentAccount?.account_id;
   const currentAccountAuctions = currentAccount?.auctionsBidded;
@@ -52,7 +53,8 @@ const AuctionPage = () => {
     startingPrice: '',
     reservePrice: 'NaN',
     currentPrice: 'NaN',
-    timeRemaining: 'NaN',
+    placeBidTimeRemaining: 'NaN',
+    revealAtTimeRemaining: 'NaN',
     status: 0,
   });
   const [count, setCount] = useState(0);
@@ -70,13 +72,15 @@ const AuctionPage = () => {
 
       // Auction info
       const seller = await dutchAuctionContract.seller();
-      const tokenQty = convertWeiToEth(parseInt((await dutchAuctionContract.tokenQty())._hex));
+      const tokenQty = convertWeiToEth(
+        ethers.BigNumber.from(await dutchAuctionContract.tokenQty())._hex,
+      );
       const startingPrice = convertWeiToEth(
-        parseInt((await dutchAuctionContract.startingPrice())._hex),
+        ethers.BigNumber.from((await dutchAuctionContract.startingPrice())._hex),
       );
 
       const reservePrice = convertWeiToEth(
-        parseInt((await dutchAuctionContract.getReservePrice())._hex),
+        ethers.BigNumber.from((await dutchAuctionContract.getReservePrice())._hex),
       );
 
       const auctionStatus = await dutchAuctionContract.auctionStatusPred(currentTime);
@@ -99,13 +103,21 @@ const AuctionPage = () => {
 
       if (auctionStatus == 1) {
         const revealAt = parseInt((await dutchAuctionContract.revealAt())._hex);
-        const timeRemaining = Math.max(revealAt - currentTime, 0);
-        newAuction.timeRemaining = convertUnixTimeToMinutes(timeRemaining);
+        const placeBidTimeRemaining = Math.max(revealAt - currentTime, 0);
+        newAuction.placeBidTimeRemaining = convertUnixTimeToMinutes(placeBidTimeRemaining);
 
         const currentPrice = convertWeiToEth(
-          parseInt((await dutchAuctionContract.getPrice(currentTime))._hex),
+          ethers.BigNumber.from((await dutchAuctionContract.getPrice(currentTime))._hex),
         );
         newAuction.currentPrice = currentPrice;
+      }
+
+      if (auctionStatus === 2) {
+        newAuction.currentPrice = reservePrice;
+        newAuction.placeBidTimeRemaining = 0;
+        const endAt = parseInt((await dutchAuctionContract.endAt())._hex);
+        const revealAtTimeRemaining = Math.max(endAt - currentTime, 0);
+        newAuction.revealAtTimeRemaining = convertUnixTimeToMinutes(revealAtTimeRemaining);
       }
 
       setAuction(newAuction);
@@ -138,21 +150,48 @@ const AuctionPage = () => {
     console.log(submarineBalance);
   }
 
+  async function revealSubmarine() {
+    let submarineAddress = '';
+    for (const auction of currentAccountAuctions) {
+      if (auction.auctionAdd.toLowerCase() === auctionAddress.toLowerCase()) {
+        submarineAddress = auction.submarineAdd;
+        break;
+      }
+    }
+    if (submarineAddress === '') {
+      alert('Submarine address not found!');
+      return;
+    }
+    console.log(submarineAddress);
+    const addSubmarineTxn = await dutchAuctionContract.addSubmarineToList(submarineAddress);
+    await addSubmarineTxn.wait();
+    const submarineList = await dutchAuctionContract.getSubmarineList();
+    console.log(submarineList);
+    dispatch(accountRevealed(currentAccountAddress, auctionAddress));
+  }
+
   const [enableBid, setEnableBid] = useState(true);
+  const [enableReveal, setEnableReveal] = useState(false);
   useEffect(() => {
     //Loop through currentAccountAuctions to check if currentAccountAddress has bidded;
     let bidded = false;
+    let revealed = false;
     console.log(currentAccountAuctions);
     if (currentAccountAuctions) {
       currentAccountAuctions.map((auction) => {
         if (auction.auctionAdd.toLowerCase() == auctionAddress.toLowerCase()) {
           bidded = true;
+          if (auction.revealed === true) {
+            revealed = true;
+          }
         }
       });
     }
     const newEnableBid = Boolean(auction.status == 1 && !bidded && currentAccountAddress);
+    const newEnableReveal = Boolean(auction.status === 2 && !revealed && currentAccountAddress);
     setEnableBid(newEnableBid);
-  }, [auction, accountBidded, currentAccountAddress]);
+    setEnableReveal(newEnableReveal);
+  }, [auction, accountBidded, accountRevealed, currentAccountAddress]);
 
   return (
     <div>
@@ -205,7 +244,7 @@ const AuctionPage = () => {
               <Divider variant="middle" orientation="vertical" flexItem />
 
               <Box sx={auctionLiveInfoStyle}>
-                <Grid container>
+                <Grid container style={{ marginBottom: '3rem' }}>
                   <Grid item xs={8}>
                     <Typography sx={fieldStyle}>Started On:</Typography>
                   </Grid>
@@ -213,10 +252,16 @@ const AuctionPage = () => {
                     <Typography sx={fieldStyle}>{auction.startedOn}</Typography>
                   </Grid>
                   <Grid item xs={8}>
-                    <Typography sx={fieldStyle}>Time Remaining:</Typography>
+                    <Typography sx={fieldStyle}>Place bid time remaining:</Typography>
                   </Grid>
                   <Grid item xs={4}>
-                    <Typography sx={fieldStyle}>{auction.timeRemaining}</Typography>
+                    <Typography sx={fieldStyle}>{auction.placeBidTimeRemaining}</Typography>
+                  </Grid>
+                  <Grid item xs={8}>
+                    <Typography sx={fieldStyle}>Reveal bid time remaining:</Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography sx={fieldStyle}>{auction.revealAtTimeRemaining}</Typography>
                   </Grid>
                   <Grid item xs={8}>
                     <Typography sx={fieldStyle}>
@@ -229,24 +274,35 @@ const AuctionPage = () => {
                 </Grid>
                 <Box sx={bidAreaStyle}>
                   {!(currentAccountAddress == auction.sellerAdd.toLowerCase()) ? (
-                    <div>
-                      <TextField
-                        label="ETH"
-                        size="small"
-                        style={{ width: '50%', marginRight: '1rem' }}
-                        value={bidAmount}
-                        disabled={!enableBid}
-                        onChange={(e) => setBidAmount(e.target.value)}
-                      />
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={placeBid}
-                        disabled={!enableBid}
-                      >
-                        Place bid
-                      </Button>
-                    </div>
+                    <>
+                      <div>
+                        <TextField
+                          label="ETH"
+                          size="small"
+                          style={{ width: '40%', marginRight: '1rem' }}
+                          value={bidAmount}
+                          disabled={!enableBid}
+                          onChange={(e) => setBidAmount(e.target.value)}
+                        />
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={placeBid}
+                          disabled={!enableBid}
+                          style={{ marginRight: '1rem' }}
+                        >
+                          Place bid
+                        </Button>
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={revealSubmarine}
+                          disabled={!enableReveal}
+                        >
+                          Reveal
+                        </Button>
+                      </div>
+                    </>
                   ) : (
                     <Button
                       variant="contained"

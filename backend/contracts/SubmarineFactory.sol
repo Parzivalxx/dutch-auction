@@ -26,7 +26,7 @@ contract Submarine {
     address payable private owner;
 
     // Store timestamp
-    uint256 public timestamp;
+    uint256 public timestamp = block.timestamp;
 
     // Store Token current price
     uint256 public currentPrice;

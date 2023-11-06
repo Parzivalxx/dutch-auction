@@ -51,7 +51,16 @@ const CreateAuctionModal = (props) => {
   async function deployToken() {
     const name = formData.tokenName;
     const ticker = formData.tokenTicker;
-    const tokenQty = convertEthToWei(formData.tokenQty);
+    let tokenQty = formData.tokenQty;
+    if (!tokenQty || !name || !ticker) {
+      alert('Please fill up all required fields first');
+      return;
+    }
+    if (tokenQty <= 0) {
+      alert('Token quantity has to be more than 0!');
+      return;
+    }
+    tokenQty = convertEthToWei(formData.tokenQty);
     const deployTokenTX = await tokenFactoryContract.deployToken(name, ticker, tokenQty);
     const rc = await deployTokenTX.wait();
     const rcLogs = decodeTransctionLogs(TokenFactory, rc.logs);
@@ -81,6 +90,18 @@ const CreateAuctionModal = (props) => {
     const { isExist, tokenAdd } = await isTokenExist(tokenName, tokenTicker);
     if (!isExist) {
       setEnableDeployToken(true);
+      return;
+    }
+    if (!tokenName || !tokenTicker || !tokenQty || !startingPrice || !discountRate) {
+      alert('Please fill up all required fields');
+      return;
+    }
+    if (tokenQty <= 0) {
+      alert('Token quantity has to be more than 0!');
+      return;
+    }
+    if (startingPrice < discountRate * 60 * 20) {
+      alert('Starting price has to be higher to cover discount rate over 20 minutes!');
       return;
     }
     console.log(convertEthToWei(tokenQty));
@@ -120,6 +141,7 @@ const CreateAuctionModal = (props) => {
               name="tokenName"
               value={formData.tokenName}
               onChange={handleFormChange}
+              required
             />
           </Grid>
           <Grid item xs={6}>
@@ -129,6 +151,7 @@ const CreateAuctionModal = (props) => {
               name="tokenTicker"
               value={formData.tokenTicker}
               onChange={handleFormChange}
+              required
             />
           </Grid>
           <Grid item xs={4}>
@@ -139,6 +162,10 @@ const CreateAuctionModal = (props) => {
               type="number"
               value={formData.tokenQty}
               onChange={handleFormChange}
+              inputProps={{
+                min: 10,
+              }}
+              required
             />
           </Grid>
           <Grid item xs={4}>
@@ -149,6 +176,10 @@ const CreateAuctionModal = (props) => {
               type="number"
               value={formData.startingPrice}
               onChange={handleFormChange}
+              inputProps={{
+                min: 10,
+              }}
+              required
             />
           </Grid>
           <Grid item xs={4}>
@@ -159,6 +190,10 @@ const CreateAuctionModal = (props) => {
               type="number"
               value={formData.discountRate}
               onChange={handleFormChange}
+              inputProps={{
+                min: 1,
+              }}
+              required
             />
           </Grid>
           <Grid item xs={12}>
