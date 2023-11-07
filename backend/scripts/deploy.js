@@ -23,15 +23,28 @@ async function main() {
 
   await dutchAuctionFactory.waitForDeployment();
   await tokenFactory.waitForDeployment();
+  
+  // Deploy the Submarine related contracts
+  const RevealContract = await hre.ethers.getContractFactory("Reveal");
+  const deployedReveal = await RevealContract.deploy();
+  await deployedReveal.waitForDeployment();
+
+  const SubmarineFactory = await hre.ethers.getContractFactory("SubmarineFactory");
+  const deployedSubFactory = await SubmarineFactory.deploy(deployedReveal.target);
+  await deployedSubFactory.waitForDeployment();
 
   dutchAuctionAddress = dutchAuctionFactory.target;
   tokenAddress = tokenFactory.target;
+  subFactoryAddress = deployedSubFactory.target;
+  revealAddress = deployedReveal.target;
 
   console.log("DutchAuctionFactory deployed at:", dutchAuctionAddress);
   console.log("TokenFactory deployed at:", tokenAddress);
+  console.log("SubmarineFactory deployed at:", subFactoryAddress);
+  console.log("Reveal deployed at:", revealAddress);
 
   const outputPath = path.join(__dirname, "../../frontend/.env");
-  const envVariables = `REACT_APP_DUTCH_AUCTION_FACTORY_ADDRESS=${dutchAuctionAddress}\nREACT_APP_TOKEN_FACTORY_ADDRESS=${tokenAddress}\n`;
+  const envVariables = `REACT_APP_DUTCH_AUCTION_FACTORY_ADDRESS=${dutchAuctionAddress}\nREACT_APP_TOKEN_FACTORY_ADDRESS=${tokenAddress}\nREACT_APP_SUB_FACTORY_ADDRESS=${subFactoryAddress}\nREACT_APP_REVEAL_ADDRESS=${revealAddress}`;
 
   // Write the contract addresses to the .env file
   fs.writeFileSync(outputPath, envVariables);

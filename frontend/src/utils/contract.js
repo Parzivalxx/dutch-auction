@@ -2,11 +2,12 @@ import DutchAuctionFactory from '../abis/DutchAuctionFactory.json';
 import DutchAuction from '../abis/DutchAuction.json';
 import TokenFactory from '../abis/TokenFactory.json';
 import Token from '../abis/Token.json';
+import SubmarineABI from '../abis/Submarine.json';
 
 const abiDecoder = require('abi-decoder');
-const ethers = require('ethers');
-const provider = new ethers.providers.Web3Provider(window.ethereum);
-const signer = provider.getSigner();
+export const ethers = require('ethers');
+export const provider = new ethers.providers.Web3Provider(window.ethereum);
+export const signer = provider.getSigner();
 
 export function getDutchAuctionFactoryContract() {
   const contract = new ethers.Contract(
@@ -33,6 +34,11 @@ export function getTokenFactoryContract() {
 
 export function getTokenContract(address) {
   const contract = new ethers.Contract(address, Token, signer);
+  return contract;
+}
+
+export function getSubmarineContract(address) {
+  const contract = new ethers.Contract(address, SubmarineABI, signer);
   return contract;
 }
 

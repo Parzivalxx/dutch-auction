@@ -8,12 +8,15 @@ import { Button } from '@mui/material';
 import './css/nav.css';
 import logo from '../images/nav-bar-banner.png';
 
-import { accountLinked } from '../actions/accountActions';
+import { accountLinked, accountUnlinked } from '../actions/accountActions';
+import { getCurrentAccount } from '../utils/utils';
 
 const Nav = (props) => {
   const { handleOpenModal } = props;
 
-  const account_id = useSelector((state) => state.account.account_id);
+  const accounts = useSelector((state) => state.accountsState.accounts);
+  const currentAccount = getCurrentAccount(accounts);
+  console.log(currentAccount);
   const { sdk } = useSDK();
 
   const dispatch = useDispatch();
@@ -31,7 +34,7 @@ const Nav = (props) => {
   const disconnect = async () => {
     try {
       await sdk?.disconnect();
-      dispatch(accountLinked(null));
+      dispatch(accountUnlinked(currentAccount.account_id));
     } catch (err) {
       console.warn(`failed to disconnect..`, err);
     }
@@ -56,10 +59,10 @@ const Nav = (props) => {
 
       <div className="nav__group2">
         <div className="nav__account">
-          {!account_id ? (
+          {!currentAccount ? (
             <Button onClick={connect}>Link your wallet</Button>
           ) : (
-            <Button onClick={disconnect}>{account_id}</Button>
+            <Button onClick={disconnect}>{currentAccount.account_id}</Button>
           )}
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ethers } from 'ethers';
 
 // MUI
 import {
@@ -28,7 +29,7 @@ import {
 // Components
 import { getDutchAuctionFactoryContract, getDutchAuctionContract } from '../utils/contract';
 import LoadingDisplay from './LoadingDisplay';
-import { auctionStatus, convertUnixTimeToMinutes, convertWeiToEth } from '../utils/utils';
+import { auctionStatusText, convertUnixTimeToMinutes, convertWeiToEth } from '../utils/utils';
 
 const Board = () => {
   const [loading, setLoading] = useState(true);
@@ -66,16 +67,17 @@ const Board = () => {
       const auctionCount = parseInt((await dutchAuctionFactoryContract.auctionCount())._hex);
       let auctions = [];
       for (let i = 0; i < auctionCount; i++) {
+        const currentTime = Math.floor(Date.now() / 1000);
         const auction_address = await dutchAuctionFactoryContract.auctions(i);
         const auctionContract = getDutchAuctionContract(auction_address);
 
+        const auctionStatus = await auctionContract.auctionStatusPred(currentTime);
+        console.log(auctionStatus);
         const auctionStartPrice = convertWeiToEth(
-          parseInt((await auctionContract.startingPrice())._hex),
+          ethers.BigNumber.from((await auctionContract.startingPrice())._hex),
         );
-        const auctionActive = await auctionContract.active();
-        const auctionEnded = await auctionContract.ended();
         const auctionReservePrice = convertWeiToEth(
-          parseInt((await auctionContract.getReservePrice())._hex),
+          ethers.BigNumber.from((await auctionContract.getReservePrice())._hex),
         );
 
         let auction = {
@@ -83,18 +85,17 @@ const Board = () => {
           startPrice: auctionStartPrice,
           currentPrice: auctionStartPrice,
           remainingTime: 'NaN',
-          status: auctionStatus(auctionActive, auctionEnded),
+          status: auctionStatus,
           reservePrice: auctionReservePrice,
         };
 
-        if (auctionActive == true) {
-          const currentTime = Math.floor(Date.now() / 1000);
+        if (auctionStatus == 1) {
           const auctionCurrentPrice = convertWeiToEth(
-            parseInt((await auctionContract.getPrice(currentTime))._hex),
+            ethers.BigNumber.from((await auctionContract.getPrice(currentTime))._hex),
           );
           auction.currentPrice = auctionCurrentPrice;
 
-          const auctionExpireAt = await auctionContract.expiresAt();
+          const auctionExpireAt = await auctionContract.revealAt();
           const auctionExpireAtInt = parseInt(auctionExpireAt._hex);
           const auctionRemainingTime = Math.max(0, auctionExpireAtInt - currentTime);
           auction.remainingTime = convertUnixTimeToMinutes(auctionRemainingTime);
@@ -151,7 +152,7 @@ const Board = () => {
                   >
                     <TableCell sx={tableCellStyle}>{auction.address}</TableCell>
                     <TableCell align="right" sx={tableCellStyle}>
-                      {auction.status}
+                      {auctionStatusText(auction.status)}
                     </TableCell>
                     <TableCell align="right" sx={tableCellStyle}>
                       {auction.remainingTime}
