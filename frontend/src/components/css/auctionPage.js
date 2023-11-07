@@ -7,7 +7,7 @@ export const containerStyle = {
 export const paperStyle = {
   display: 'flex',
   flexDirection: 'column',
-  width: '60%',
+  width: '65%',
 };
 
 export const auctionTitleContainerStyle = {
@@ -35,7 +35,12 @@ export const auctionLiveInfoStyle = {
 
 export const fieldStyle = {
   fontSize: '1.25rem',
-  marginBottom: '2rem',
+  marginBottom: '1rem',
+};
+
+export const headerTextSyle = {
+  fontSize: '1.25rem',
+  marginBottom: '0.25rem',
 };
 
 export const bidAreaStyle = {

@@ -11,18 +11,5 @@
     ],
     "stateMutability": "view",
     "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_tokenSwap",
-        "type": "address"
-      }
-    ],
-    "name": "performSwap",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
   }
 ]

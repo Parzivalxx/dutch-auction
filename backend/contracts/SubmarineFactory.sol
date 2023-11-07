@@ -35,9 +35,10 @@ contract Submarine {
     address private revealContractAddr;
 
     // Contract constructor
-    constructor(address payable _owner, address _revealContract) payable {
+    constructor(address payable _owner, address _revealContract, uint _currentPrice) payable {
         owner = _owner;
         revealContractAddr = _revealContract;
+        currentPrice = _currentPrice;
     }
 
     // Function to receive Ether. msg.data must be empty
@@ -53,8 +54,11 @@ contract Submarine {
 
     // Get owner
     function getOwner() external view returns (address) {   
-        require(msg.sender == revealContractAddr, "Reveal contract only"); 
         return owner;
+    }
+
+    function getBalance() external view returns (uint) {
+        return address(this).balance;
     }
 
     function sendToOwner(uint amount) external payable {
@@ -93,13 +97,13 @@ contract SubmarineFactory {
     event SubmarineCreated(address indexed owner, address indexed submarine);
 
     // Create Sub Contract
-    function createSubContract(address payable _owner) public returns (address){
+    function createSubContract(address payable _owner, uint _currentPrice) public returns (address){
 
         // Get byteCode for storing in the reveal contract
         bytes32 byteCode = keccak256(abi.encodePacked(type(Submarine).creationCode, abi.encode(_owner, revealContractAddr)));
 
         // Create Submarine Contract
-        Submarine sub = new Submarine(_owner, revealContractAddr);
+        Submarine sub = new Submarine(_owner, revealContractAddr, _currentPrice);
 
         // Create bytecode
         // Owner, Factory, Bytes

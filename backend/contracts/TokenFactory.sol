@@ -11,6 +11,10 @@ contract Token is ERC20 {
     ) ERC20(_name, _ticker) {
         _mint(msg.sender, _supply);
     }
+
+    function burn(address account, uint256 amount) external {
+        _burn(account, amount);
+    }
 }
 
 contract TokenFactory {

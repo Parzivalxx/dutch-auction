@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "hardhat/console.sol";
+
 interface IERC20 {
     function totalSupply() external view returns (uint256);
 
@@ -23,12 +25,15 @@ interface IERC20 {
         address recipient,
         uint256 amount
     ) external returns (bool);
+
+    function burn(address account, uint256 amount) external;
 }
 
 interface ISubmarine{
     function timestamp() external view returns (uint);
     function currentPrice() external view returns (uint);
     function getOwner() external view returns (address);
+    function getBalance() external view returns (uint);
     function sendToOwner(uint amount) external payable;
     function sendToAccount(address payable account, uint amount) external payable;
 }
@@ -39,7 +44,7 @@ function min(uint256 a, uint256 b) pure returns (uint256) {
 
 contract DutchAuction {
     uint public constant AUCTION_DURATION = 2 minutes;
-    uint public constant REVEAL_DURATION = 30 minutes;
+    uint public constant REVEAL_DURATION = 1 minutes;
 
     IERC20 public immutable token;
     uint public immutable tokenQty;
@@ -51,11 +56,12 @@ contract DutchAuction {
     uint public startAt = 0;
     uint public revealAt = 0;
     uint public endAt = 0;
-
+    bool distributed = false;
     enum Status{
         NotStarted,
         Active,
         Revealing,
+        Distributing,
         Ended
     }
 
@@ -78,6 +84,7 @@ contract DutchAuction {
     event LogBid(address indexed _from, uint indexed _price);
     event EndCommitStage();
     event EndRevealStage();
+    event EndDistributingStage();
     event SuccessfulBid(
         address indexed _bidder,
         uint _qtyAlloacated,
@@ -112,6 +119,11 @@ contract DutchAuction {
         _;
     }
 
+    modifier onlyDistributing(){
+        require(status == Status.Distributing, "This auction is not in distributing stage");
+        _;
+    }
+
     modifier onlyEnded(){
         require(status == Status.Ended, "This auction is not ended");
         _;
@@ -138,7 +150,7 @@ contract DutchAuction {
         tokenQty = _tokenQty;
         tokenId = _tokenId;
 
-        tokenNetWorthPool = startingPrice * tokenQty;
+        tokenNetWorthPool = startingPrice * tokenQty / 10**18;
 
         emit AuctionCreated(
             seller,
@@ -181,20 +193,23 @@ contract DutchAuction {
         uint time_now
     ) internal view returns (uint) {
         uint currentPrice = getPrice(time_now);
-        return currentPrice * tokenQty;
+        return currentPrice * tokenQty / 10**18;
     }
 
-    function endCommitStage(uint time_now) public onlyActive {
-        require(time_now >= revealAt, "Commit stage is not ended yet");
+    function endCommitStage() public onlyActive {
         status = Status.Revealing;
         emit EndCommitStage();
     }
 
-    function endReavealStage(uint time_now) public onlyRevealing {
-        require(time_now >= endAt, "Reveal stage is not ended yet");
-        distributeToken();
-        status = Status.Ended;
+    function endReavealStage() public onlyRevealing {
+        status = Status.Distributing;
         emit EndRevealStage();
+    }
+
+    function endDistributingStage() public onlyDistributing {
+        distributed = true;
+        status = Status.Ended;
+        emit EndDistributingStage();
     }
 
     function getReservePrice() public view returns (uint) {
@@ -211,12 +226,21 @@ contract DutchAuction {
         }else if (time_now >= revealAt && time_now < endAt){
             predStatus = Status.Revealing;
         }else if (time_now >= endAt){
-            predStatus = Status.Ended;
+            if (distributed){
+                predStatus = Status.Ended;
+            } else{
+                predStatus = Status.Distributing;
+            }
         }
         return predStatus;
     }
 
-    function addSubmarineToList(address _submarine) public {
+    function addSubmarineToList(address _submarine) external {
+        if (status == Status.Active){
+            endCommitStage();
+        } else if (status != Status.Revealing){
+            return;
+        }
         submarineList.push(_submarine);
         for (uint i = submarineList.length - 1; i > 0; i--) {
             ISubmarine submarine = ISubmarine(submarineList[i]);
@@ -235,25 +259,29 @@ contract DutchAuction {
         return submarineList;
     }
 
-    function distributeToken() public payable onlyRevealing {
+    function distributeToken() public payable onlyRevealing{
+        endReavealStage();
         uint currentTokenNetWorth = 0;
         uint currentBidNetWorth = 0;  
-        uint reservePrice = getReservePrice();
-        uint finalPrice = reservePrice;
+        uint finalPrice = startingPrice;
+        bool exceededWorth = false;
         // find final price and refund to submarine owners
         for (uint i = 0; i < submarineList.length; i++) {
             ISubmarine submarine = ISubmarine(submarineList[i]);
-            uint submarineBalance = submarineList[i].balance;
-            currentTokenNetWorth = submarine.currentPrice() * tokenQty;
+            uint submarineBalance = submarine.getBalance();
+            currentTokenNetWorth = submarine.currentPrice() * tokenQty / 10**18;
             currentBidNetWorth += submarineBalance;
-            if (currentBidNetWorth >= currentTokenNetWorth) {
-                if (finalPrice > reservePrice){
-                    submarine.sendToOwner(submarineBalance);
-                    continue;
-                }
+            if (!exceededWorth) {
                 finalPrice = submarine.currentPrice();
+            } else{
+                submarine.sendToOwner(submarineBalance);
+                continue;
+            }
+            if (currentBidNetWorth >= currentTokenNetWorth) {
+                // partially refund to the last bidder
                 uint refund = currentBidNetWorth - currentTokenNetWorth;
                 submarine.sendToOwner(refund);
+                exceededWorth = true;
             }
         }
         // distribute token to bidders
@@ -263,12 +291,25 @@ contract DutchAuction {
                 break;
             }
             ISubmarine submarine = ISubmarine(submarineList[i]);
-            uint submarineBalance = submarineList[i].balance;
-            uint qty = submarineBalance / finalPrice;
-            token.transfer(submarine.getOwner(), min(qty, tokenQtyLeft));
-            submarine.sendToAccount(seller, min(qty, tokenQtyLeft) * finalPrice);
+            uint submarineBalance = submarine.getBalance();
+            uint qty = submarineBalance * 10**18 / finalPrice;
+            // Send token to bidder
+            console.log("qty left %s", tokenQtyLeft);
+            console.log("transfer %s to %s", qty, submarine.getOwner());
+            console.log("account balance %s", token.balanceOf(address(this)));
+            console.log("submarine balance %s", submarineBalance);
+            console.log("final price %s", finalPrice);
+            token.approve(address(this), min(qty, tokenQtyLeft));
+            token.transferFrom(address(this), submarine.getOwner(), min(qty, tokenQtyLeft));
+
+            // Send ether to seller
+            submarine.sendToAccount(seller, min(qty, tokenQtyLeft) * finalPrice / 10**18);
             tokenQtyLeft -= qty;
         }
-
+        // refund to seller
+        if (tokenQtyLeft > 0){
+            token.burn(address(this), tokenQtyLeft);
+        }
+        endDistributingStage();
     }
 }

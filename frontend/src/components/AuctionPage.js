@@ -14,6 +14,7 @@ import {
   containerStyle,
   fieldStyle,
   paperStyle,
+  headerTextSyle,
 } from './css/auctionPage';
 
 import { getDutchAuctionContract, getTokenContract } from '../utils/contract';
@@ -28,12 +29,14 @@ import LoadingDisplay from './LoadingDisplay';
 import { accountBidded, accountRevealed } from '../actions/accountActions';
 import {
   createSubmarineContract,
+  executeTransaction,
   getSubmarineBalance,
   sendEthertoSubmarine,
 } from '../utils/submarine';
 
 const AuctionPage = () => {
   const [loading, setLoading] = useState(true);
+  const currentTime = Math.floor(Date.now() / 1000);
   const currentURL = window.location.href;
   const auctionAddress = currentURL.split('/')[5];
   const accounts = useSelector((state) => state.accountsState.accounts);
@@ -45,6 +48,7 @@ const AuctionPage = () => {
   const dispatch = useDispatch();
 
   const [auction, setAuction] = useState({
+    tokenAdd: '',
     tokenName: '',
     tokenTicker: '',
     sellerAdd: '',
@@ -62,7 +66,6 @@ const AuctionPage = () => {
   useEffect(() => {
     async function getAuctionInfo() {
       const dutchAuctionContract = getDutchAuctionContract(auctionAddress);
-      const currentTime = Math.floor(Date.now() / 1000);
 
       // Token info
       const tokenAdd = await dutchAuctionContract.token();
@@ -86,6 +89,7 @@ const AuctionPage = () => {
       const auctionStatus = await dutchAuctionContract.auctionStatusPred(currentTime);
       const newAuction = {
         ...auction,
+        tokenAdd: tokenAdd,
         tokenName: tokenName,
         tokenTicker: tokenTicker,
         sellerAdd: seller,
@@ -114,10 +118,14 @@ const AuctionPage = () => {
 
       if (auctionStatus === 2) {
         newAuction.currentPrice = reservePrice;
-        newAuction.placeBidTimeRemaining = 0;
+        newAuction.placeBidTimeRemaining = convertUnixTimeToMinutes(0);
         const endAt = parseInt((await dutchAuctionContract.endAt())._hex);
         const revealAtTimeRemaining = Math.max(endAt - currentTime, 0);
         newAuction.revealAtTimeRemaining = convertUnixTimeToMinutes(revealAtTimeRemaining);
+      }
+
+      if (auctionStatus === 3) {
+        newAuction.revealAtTimeRemaining = convertUnixTimeToMinutes(0);
       }
 
       setAuction(newAuction);
@@ -138,11 +146,12 @@ const AuctionPage = () => {
     const startAucTx = await dutchAuctionContract.startAuction();
     await startAucTx.wait();
     setLoading(false);
+    window.location.reload();
   }
 
   const [bidAmount, setBidAmount] = useState();
   async function placeBid() {
-    const submarineAddresss = await createSubmarineContract();
+    const submarineAddresss = await createSubmarineContract(auction.currentPrice);
     console.log(submarineAddresss);
     dispatch(accountBidded(currentAccountAddress, auctionAddress, submarineAddresss));
     await sendEthertoSubmarine(submarineAddresss, bidAmount);
@@ -163,8 +172,7 @@ const AuctionPage = () => {
       return;
     }
     console.log(submarineAddress);
-    const addSubmarineTxn = await dutchAuctionContract.addSubmarineToList(submarineAddress);
-    await addSubmarineTxn.wait();
+    await executeTransaction(submarineAddress, auctionAddress);
     const submarineList = await dutchAuctionContract.getSubmarineList();
     console.log(submarineList);
     dispatch(accountRevealed(currentAccountAddress, auctionAddress));
@@ -172,6 +180,7 @@ const AuctionPage = () => {
 
   const [enableBid, setEnableBid] = useState(true);
   const [enableReveal, setEnableReveal] = useState(false);
+  const [revealedBid, setRevealedBid] = useState(false);
   useEffect(() => {
     //Loop through currentAccountAuctions to check if currentAccountAddress has bidded;
     let bidded = false;
@@ -183,15 +192,26 @@ const AuctionPage = () => {
           bidded = true;
           if (auction.revealed === true) {
             revealed = true;
+            setRevealedBid(true);
           }
         }
       });
     }
     const newEnableBid = Boolean(auction.status == 1 && !bidded && currentAccountAddress);
-    const newEnableReveal = Boolean(auction.status === 2 && !revealed && currentAccountAddress);
+    const newEnableReveal = Boolean(
+      auction.status === 2 && !revealed && currentAccountAddress && bidded,
+    );
     setEnableBid(newEnableBid);
     setEnableReveal(newEnableReveal);
   }, [auction, accountBidded, accountRevealed, currentAccountAddress]);
+
+  async function distributeToken() {
+    const tokenAdd = await dutchAuctionContract.token();
+    const tokenContract = getTokenContract(tokenAdd);
+    await dutchAuctionContract.distributeToken();
+    const balance = await tokenContract.balanceOf(currentAccountAddress);
+    console.log(parseInt(balance._hex));
+  }
 
   return (
     <div>
@@ -201,10 +221,11 @@ const AuctionPage = () => {
         <Box sx={containerStyle}>
           <Paper sx={paperStyle}>
             <Box sx={auctionTitleContainerStyle}>
-              <Typography variant="h4">
+              <Typography variant="h4" style={{ marginBottom: '1rem' }}>
                 {auction.tokenName} - {auction.tokenTicker}
               </Typography>
-              <Typography sx={fieldStyle}>Seller Address: {auction.sellerAdd}</Typography>
+              <Typography sx={headerTextSyle}>Seller Address: {auction.sellerAdd}</Typography>
+              <Typography sx={headerTextSyle}>Token Address: {auction.tokenAdd}</Typography>
             </Box>
             <Divider variant="middle" flexItem />
             <Box sx={aunctionContentStyle}>
@@ -275,24 +296,28 @@ const AuctionPage = () => {
                 <Box sx={bidAreaStyle}>
                   {!(currentAccountAddress == auction.sellerAdd.toLowerCase()) ? (
                     <>
-                      <div>
-                        <TextField
-                          label="ETH"
-                          size="small"
-                          style={{ width: '40%', marginRight: '1rem' }}
-                          value={bidAmount}
-                          disabled={!enableBid}
-                          onChange={(e) => setBidAmount(e.target.value)}
-                        />
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={placeBid}
-                          disabled={!enableBid}
-                          style={{ marginRight: '1rem' }}
-                        >
-                          Place bid
-                        </Button>
+                      {auction.status == 1 || auction.status == 0 ? (
+                        <>
+                          <TextField
+                            label="ETH"
+                            size="small"
+                            style={{ width: '40%', marginRight: '1rem' }}
+                            value={bidAmount}
+                            disabled={!enableBid}
+                            onChange={(e) => setBidAmount(e.target.value)}
+                          />
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={placeBid}
+                            disabled={!enableBid}
+                            style={{ marginRight: '1rem' }}
+                          >
+                            Place bid
+                          </Button>
+                        </>
+                      ) : null}
+                      {auction.status == 2 ? (
                         <Button
                           variant="contained"
                           color="secondary"
@@ -301,7 +326,17 @@ const AuctionPage = () => {
                         >
                           Reveal
                         </Button>
-                      </div>
+                      ) : null}
+                      {auction.status == 3 || auction.status == 4 ? (
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          disabled={auction.status != 3 || !revealedBid}
+                          onClick={distributeToken}
+                        >
+                          Distribute Token
+                        </Button>
+                      ) : null}
                     </>
                   ) : (
                     <Button

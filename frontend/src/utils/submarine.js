@@ -1,18 +1,20 @@
 import SubmarineFactoryABI from '../abis/SubmarineFactory.json';
 import RevealABI from '../abis/Reveal.json';
 import { ethers, provider, signer, decodeTransctionLogs } from './contract';
+import { convertEthToWei } from './utils';
 
 const subFactoryAddress = process.env.REACT_APP_SUB_FACTORY_ADDRESS;
 const revealAddress = process.env.REACT_APP_REVEAL_ADDRESS;
 
-export const createSubmarineContract = async () => {
+export const createSubmarineContract = async (currentPrice) => {
   console.log('Creating Submarine contract...');
   const signerAdd = await signer.getAddress();
   // Connect to Factory as signer
   const factoryContract = new ethers.Contract(subFactoryAddress, SubmarineFactoryABI, signer);
   console.log(factoryContract);
   // Create submarine contract with the owner as sender
-  const contractCreateTx = await factoryContract.createSubContract(signerAdd);
+  currentPrice = convertEthToWei(currentPrice);
+  const contractCreateTx = await factoryContract.createSubContract(signerAdd, currentPrice);
   console.log(contractCreateTx);
   // Print out submarine transaction receipt
   const txReceipt = await contractCreateTx.wait();
@@ -57,23 +59,12 @@ export const getSubmarineBalance = async (submarineAddress) => {
   return humanBalance;
 };
 
-export const executeTransaction = async (dutchAuctionAddress) => {
-  console.log('');
+export const executeTransaction = async (submarineAddess, dutchAuctionAddress) => {
   console.log('Performing swap...');
-
-  // Show ETH balance of sender
-  const signerBalance = await provider.getBalance(signer.address);
-  const humanSignerBal = ethers.utils.formatEther(signerBalance);
-  console.log('Sender current balance: ', humanSignerBal);
-
   // Connect to reveal contract
   const revealContractSigner = new ethers.Contract(revealAddress, RevealABI, signer);
 
   // Execute swap
-  const swapTx = await revealContractSigner.revealExecution(dutchAuctionAddress);
-  console.log('Swap transaction reference: ', swapTx.hash);
-
-  // Next instructions
-  console.log('Please check Etherscan before proceeding');
-  console.log('');
+  const swapTx = await revealContractSigner.revealExecution(submarineAddess, dutchAuctionAddress);
+  await swapTx.wait();
 };

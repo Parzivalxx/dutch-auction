@@ -22,6 +22,8 @@ export function auctionStatusText(auctionStatus) {
   } else if (auctionStatus == 2) {
     return 'Revealing';
   } else if (auctionStatus == 3) {
+    return 'Distributing';
+  } else if (auctionStatus == 4) {
     return 'Ended';
   }
 }

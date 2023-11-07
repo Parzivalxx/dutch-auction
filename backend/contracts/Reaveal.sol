@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 // Submarine swap
 interface ISubmarine {
   function getOwner() external view returns (address);
-  function performSwap(address _tokenSwap) external payable;
 }
 
 interface IDutchAuction{

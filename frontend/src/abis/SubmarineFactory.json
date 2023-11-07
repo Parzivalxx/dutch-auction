@@ -35,6 +35,11 @@
         "internalType": "address payable",
         "name": "_owner",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_currentPrice",
+        "type": "uint256"
       }
     ],
     "name": "createSubContract",

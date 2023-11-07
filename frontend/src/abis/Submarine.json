@@ -10,6 +10,11 @@
         "internalType": "address",
         "name": "_revealContract",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_currentPrice",
+        "type": "uint256"
       }
     ],
     "stateMutability": "payable",
@@ -29,6 +34,19 @@
   {
     "inputs": [],
     "name": "currentPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getBalance",
     "outputs": [
       {
         "internalType": "uint256",
