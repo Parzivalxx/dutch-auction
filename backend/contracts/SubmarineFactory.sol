@@ -1,27 +1,39 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-
 // Interface Contract
 interface IReveal {
-    function storeFactoryPlusBytes(address _owner, address _factory, bytes32 _byteCode) external;
+    function storeFactoryPlusBytes(
+        address _owner,
+        address _factory,
+        bytes32 _byteCode
+    ) external;
 }
 
 // Interface WETH
 interface IWETH {
     function deposit() external payable;
+
     function withdraw(uint) external;
 }
 
 // Interface UniswapV2
 interface IUniswap {
-    function swapETHForExactTokens(uint, address[] calldata, address, uint) external payable;
-    function getAmountsOut(uint, address[] memory) external returns (uint[] memory);
+    function swapETHForExactTokens(
+        uint,
+        address[] calldata,
+        address,
+        uint
+    ) external payable;
+
+    function getAmountsOut(
+        uint,
+        address[] memory
+    ) external returns (uint[] memory);
 }
 
 // Submarine Contract
 contract Submarine {
-
     // Store Owner
     address payable private owner;
 
@@ -35,7 +47,11 @@ contract Submarine {
     address private revealContractAddr;
 
     // Contract constructor
-    constructor(address payable _owner, address _revealContract, uint _currentPrice) payable {
+    constructor(
+        address payable _owner,
+        address _revealContract,
+        uint _currentPrice
+    ) payable {
         owner = _owner;
         revealContractAddr = _revealContract;
         currentPrice = _currentPrice;
@@ -53,7 +69,7 @@ contract Submarine {
     }
 
     // Get owner
-    function getOwner() external view returns (address) {   
+    function getOwner() external view returns (address) {
         return owner;
     }
 
@@ -66,23 +82,27 @@ contract Submarine {
         owner.transfer(amount);
     }
 
-    function sendToAccount(address payable account, uint amount) external payable {
+    function sendToAccount(
+        address payable account,
+        uint amount
+    ) external payable {
         require(amount <= address(this).balance, "Not enough balance");
         account.transfer(amount);
     }
 
     // Destroy smart contract
     function _destroy() public payable {
-        require(msg.sender == revealContractAddr, "Not allowed caller for destroy");
+        require(
+            msg.sender == revealContractAddr,
+            "Not allowed caller for destroy"
+        );
         address payable addr = payable(address(owner));
         selfdestruct(addr);
     }
 }
 
-
 // Factory Contract
 contract SubmarineFactory {
-
     // Store Reveal Contract
     address private revealContractAddr;
 
@@ -97,17 +117,32 @@ contract SubmarineFactory {
     event SubmarineCreated(address indexed owner, address indexed submarine);
 
     // Create Sub Contract
-    function createSubContract(address payable _owner, uint _currentPrice) public returns (address){
-
+    function createSubContract(
+        address payable _owner,
+        uint _currentPrice
+    ) public returns (address) {
         // Get byteCode for storing in the reveal contract
-        bytes32 byteCode = keccak256(abi.encodePacked(type(Submarine).creationCode, abi.encode(_owner, revealContractAddr)));
+        bytes32 byteCode = keccak256(
+            abi.encodePacked(
+                type(Submarine).creationCode,
+                abi.encode(_owner, revealContractAddr)
+            )
+        );
 
         // Create Submarine Contract
-        Submarine sub = new Submarine(_owner, revealContractAddr, _currentPrice);
+        Submarine sub = new Submarine(
+            _owner,
+            revealContractAddr,
+            _currentPrice
+        );
 
         // Create bytecode
         // Owner, Factory, Bytes
-        IReveal(revealContractAddr).storeFactoryPlusBytes(_owner, address(this), byteCode);
+        IReveal(revealContractAddr).storeFactoryPlusBytes(
+            _owner,
+            address(this),
+            byteCode
+        );
 
         // Store address
         submarines[_owner] = address(sub);
@@ -116,9 +151,10 @@ contract SubmarineFactory {
     }
 
     // Get ByteCode
-    function _getByteCode (address _owner) private view returns (bytes memory) {
+    function _getByteCode(address _owner) private view returns (bytes memory) {
         bytes memory bytecode = type(Submarine).creationCode;
-        return abi.encodePacked(bytecode, abi.encode(_owner, revealContractAddr));
+        return
+            abi.encodePacked(bytecode, abi.encode(_owner, revealContractAddr));
     }
 
     // Get Stored Submarine Address
@@ -127,7 +163,7 @@ contract SubmarineFactory {
     }
 
     // Get Reveal Contract Address
-    function getRevealContractAddress () public view returns (address) {
+    function getRevealContractAddress() public view returns (address) {
         return revealContractAddr;
     }
 }

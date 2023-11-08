@@ -2,7 +2,7 @@
 
 - Hardhat tutorial (https://hardhat.org/tutorial)
 
-```
+```bash
 npm install --force # some legacy deps
 npm run test
 

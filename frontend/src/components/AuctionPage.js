@@ -38,7 +38,8 @@ const AuctionPage = () => {
   const [loading, setLoading] = useState(true);
   const currentTime = Math.floor(Date.now() / 1000);
   const currentURL = window.location.href;
-  const auctionAddress = currentURL.split('/')[5];
+  const splitParts = currentURL.split('/');
+  const auctionAddress = splitParts[splitParts.length - 1];
   const accounts = useSelector((state) => state.accountsState.accounts);
   // console.log(accounts);
   const currentAccount = getCurrentAccount(accounts);

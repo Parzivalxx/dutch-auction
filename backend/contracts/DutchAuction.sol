@@ -29,13 +29,21 @@ interface IERC20 {
     function burn(address account, uint256 amount) external;
 }
 
-interface ISubmarine{
+interface ISubmarine {
     function timestamp() external view returns (uint);
+
     function currentPrice() external view returns (uint);
+
     function getOwner() external view returns (address);
+
     function getBalance() external view returns (uint);
+
     function sendToOwner(uint amount) external payable;
-    function sendToAccount(address payable account, uint amount) external payable;
+
+    function sendToAccount(
+        address payable account,
+        uint amount
+    ) external payable;
 }
 
 function min(uint256 a, uint256 b) pure returns (uint256) {
@@ -57,7 +65,7 @@ contract DutchAuction {
     uint public revealAt = 0;
     uint public endAt = 0;
     bool distributed = false;
-    enum Status{
+    enum Status {
         NotStarted,
         Active,
         Revealing,
@@ -105,7 +113,10 @@ contract DutchAuction {
     }
 
     modifier onlyNotStarted() {
-        require(status == Status.NotStarted, "This auction has already started");
+        require(
+            status == Status.NotStarted,
+            "This auction has already started"
+        );
         _;
     }
 
@@ -114,17 +125,23 @@ contract DutchAuction {
         _;
     }
 
-    modifier onlyRevealing(){
-        require(status == Status.Revealing, "This auction is not in revealing stage");
+    modifier onlyRevealing() {
+        require(
+            status == Status.Revealing,
+            "This auction is not in revealing stage"
+        );
         _;
     }
 
-    modifier onlyDistributing(){
-        require(status == Status.Distributing, "This auction is not in distributing stage");
+    modifier onlyDistributing() {
+        require(
+            status == Status.Distributing,
+            "This auction is not in distributing stage"
+        );
         _;
     }
 
-    modifier onlyEnded(){
+    modifier onlyEnded() {
         require(status == Status.Ended, "This auction is not ended");
         _;
     }
@@ -150,7 +167,7 @@ contract DutchAuction {
         tokenQty = _tokenQty;
         tokenId = _tokenId;
 
-        tokenNetWorthPool = startingPrice * tokenQty / 10**18;
+        tokenNetWorthPool = (startingPrice * tokenQty) / 10 ** 18;
 
         emit AuctionCreated(
             seller,
@@ -193,7 +210,7 @@ contract DutchAuction {
         uint time_now
     ) internal view returns (uint) {
         uint currentPrice = getPrice(time_now);
-        return currentPrice * tokenQty / 10**18;
+        return (currentPrice * tokenQty) / 10 ** 18;
     }
 
     function endCommitStage() public onlyActive {
@@ -216,19 +233,19 @@ contract DutchAuction {
         return startingPrice - AUCTION_DURATION * discountRate;
     }
 
-    function auctionStatusPred(uint time_now) view public returns (Status){
+    function auctionStatusPred(uint time_now) public view returns (Status) {
         // function for polling
         Status predStatus;
-        if (startAt == 0){
+        if (startAt == 0) {
             predStatus = Status.NotStarted;
-        }else if (time_now >= startAt && time_now < revealAt){
+        } else if (time_now >= startAt && time_now < revealAt) {
             predStatus = Status.Active;
-        }else if (time_now >= revealAt && time_now < endAt){
+        } else if (time_now >= revealAt && time_now < endAt) {
             predStatus = Status.Revealing;
-        }else if (time_now >= endAt){
-            if (distributed){
+        } else if (time_now >= endAt) {
+            if (distributed) {
                 predStatus = Status.Ended;
-            } else{
+            } else {
                 predStatus = Status.Distributing;
             }
         }
@@ -236,9 +253,9 @@ contract DutchAuction {
     }
 
     function addSubmarineToList(address _submarine) external {
-        if (status == Status.Active){
+        if (status == Status.Active) {
             endCommitStage();
-        } else if (status != Status.Revealing){
+        } else if (status != Status.Revealing) {
             return;
         }
         submarineList.push(_submarine);
@@ -249,7 +266,7 @@ contract DutchAuction {
                 address temp = submarineList[i - 1];
                 submarineList[i - 1] = submarineList[i];
                 submarineList[i] = temp;
-            } else{
+            } else {
                 break;
             }
         }
@@ -259,21 +276,23 @@ contract DutchAuction {
         return submarineList;
     }
 
-    function distributeToken() public payable onlyRevealing{
+    function distributeToken() public payable onlyRevealing {
         endReavealStage();
         uint currentTokenNetWorth = 0;
-        uint currentBidNetWorth = 0;  
+        uint currentBidNetWorth = 0;
         uint finalPrice = startingPrice;
         bool exceededWorth = false;
         // find final price and refund to submarine owners
         for (uint i = 0; i < submarineList.length; i++) {
             ISubmarine submarine = ISubmarine(submarineList[i]);
             uint submarineBalance = submarine.getBalance();
-            currentTokenNetWorth = submarine.currentPrice() * tokenQty / 10**18;
+            currentTokenNetWorth =
+                (submarine.currentPrice() * tokenQty) /
+                10 ** 18;
             currentBidNetWorth += submarineBalance;
             if (!exceededWorth) {
                 finalPrice = submarine.currentPrice();
-            } else{
+            } else {
                 submarine.sendToOwner(submarineBalance);
                 continue;
             }
@@ -287,12 +306,12 @@ contract DutchAuction {
         // distribute token to bidders
         uint tokenQtyLeft = tokenQty;
         for (uint i = 0; i < submarineList.length; i++) {
-            if (tokenQtyLeft <= 0){
+            if (tokenQtyLeft <= 0) {
                 break;
             }
             ISubmarine submarine = ISubmarine(submarineList[i]);
             uint submarineBalance = submarine.getBalance();
-            uint qty = submarineBalance * 10**18 / finalPrice;
+            uint qty = (submarineBalance * 10 ** 18) / finalPrice;
             // Send token to bidder
             console.log("qty left %s", tokenQtyLeft);
             console.log("transfer %s to %s", qty, submarine.getOwner());
@@ -300,14 +319,21 @@ contract DutchAuction {
             console.log("submarine balance %s", submarineBalance);
             console.log("final price %s", finalPrice);
             token.approve(address(this), min(qty, tokenQtyLeft));
-            token.transferFrom(address(this), submarine.getOwner(), min(qty, tokenQtyLeft));
+            token.transferFrom(
+                address(this),
+                submarine.getOwner(),
+                min(qty, tokenQtyLeft)
+            );
 
             // Send ether to seller
-            submarine.sendToAccount(seller, min(qty, tokenQtyLeft) * finalPrice / 10**18);
+            submarine.sendToAccount(
+                seller,
+                (min(qty, tokenQtyLeft) * finalPrice) / 10 ** 18
+            );
             tokenQtyLeft -= qty;
         }
         // refund to seller
-        if (tokenQtyLeft > 0){
+        if (tokenQtyLeft > 0) {
             token.burn(address(this), tokenQtyLeft);
         }
         endDistributingStage();
