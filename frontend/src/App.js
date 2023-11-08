@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 
 import Home from './components/Home';
@@ -27,14 +27,14 @@ function App() {
   });
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Nav openModal={openModal} handleOpenModal={() => setOpenModal(true)} />
       <Routes>
-        <Route path="/dutch-auction/" element={<Home />} />
-        <Route path="/dutch-auction/auctions#/:auctionID" element={<AuctionPage />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/auctions/:auctionID" element={<AuctionPage />} />
       </Routes>
       <CreateAuctionModal openModal={openModal} handleCloseModal={() => setOpenModal(false)} />
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

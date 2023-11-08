@@ -49,16 +49,21 @@ const Board = () => {
   // Page numbers for buttons
   let pageNumbers = [];
   const num = Math.ceil(auctions.length / auncPerPage);
-  for (let i = 1; i <= num; i++) {
-    pageNumbers.push(i);
+  if (num === 0) {
+    pageNumbers = [1];
+  } else {
+    for (let i = 1; i <= num; i++) {
+      pageNumbers.push(i);
+    }
   }
+
   // When page number button is clicked
   const clickPageNumberButton = (num) => {
     setPageNumber(num);
   };
 
   const onRowClick = (address) => {
-    navigate(`/dutch-auction/auctions/${address}`);
+    navigate(`/auctions/${address}`);
   };
   const dutchAuctionFactoryContract = getDutchAuctionFactoryContract();
 
