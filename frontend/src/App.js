@@ -31,7 +31,7 @@ function App() {
       <Nav openModal={openModal} handleOpenModal={() => setOpenModal(true)} />
       <Routes>
         <Route path="/dutch-auction/" element={<Home />} />
-        <Route path="/dutch-auction/auctions/:auctionID" element={<AuctionPage />} />
+        <Route path="/dutch-auction/auctions#/:auctionID" element={<AuctionPage />} />
       </Routes>
       <CreateAuctionModal openModal={openModal} handleCloseModal={() => setOpenModal(false)} />
     </BrowserRouter>

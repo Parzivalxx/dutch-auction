@@ -16,7 +16,7 @@ const Nav = (props) => {
 
   const accounts = useSelector((state) => state.accountsState.accounts);
   const currentAccount = getCurrentAccount(accounts);
-  console.log(currentAccount);
+  console.log(accounts);
   const { sdk } = useSDK();
 
   const dispatch = useDispatch();
