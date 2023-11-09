@@ -10,28 +10,6 @@ interface IReveal {
     ) external;
 }
 
-// Interface WETH
-interface IWETH {
-    function deposit() external payable;
-
-    function withdraw(uint) external;
-}
-
-// Interface UniswapV2
-interface IUniswap {
-    function swapETHForExactTokens(
-        uint,
-        address[] calldata,
-        address,
-        uint
-    ) external payable;
-
-    function getAmountsOut(
-        uint,
-        address[] memory
-    ) external returns (uint[] memory);
-}
-
 // Submarine Contract
 contract Submarine {
     // Store Owner
