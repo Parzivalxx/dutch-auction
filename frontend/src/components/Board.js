@@ -88,7 +88,7 @@ const Board = () => {
         let auction = {
           address: auction_address,
           startPrice: auctionStartPrice,
-          currentPrice: auctionStartPrice,
+          currentPrice: 'NaN',
           remainingTime: 'NaN',
           status: auctionStatus,
           reservePrice: auctionReservePrice,
