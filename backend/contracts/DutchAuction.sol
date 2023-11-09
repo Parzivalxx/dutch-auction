@@ -79,6 +79,7 @@ contract DutchAuction {
     uint private currentBidNetWorthPool;
     // mapping submarine address to timestamp
     address[] private submarineList;
+    mapping(address => bool) private seenBidders;
 
     event AuctionCreated(
         address indexed _seller,
@@ -285,6 +286,11 @@ contract DutchAuction {
         // find final price and refund to submarine owners
         for (uint i = 0; i < submarineList.length; i++) {
             ISubmarine submarine = ISubmarine(submarineList[i]);
+            address bidder = submarine.getOwner();
+            if (seenBidders[bidder]) {
+                continue;
+            }
+            seenBidders[bidder] = true;
             uint submarineBalance = submarine.getBalance();
             currentTokenNetWorth =
                 (submarine.currentPrice() * tokenQty) /
