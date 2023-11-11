@@ -18,11 +18,11 @@ const CreateAuctionModal = (props) => {
   const navigate = useNavigate();
   const { openModal, handleCloseModal } = props;
   const [formData, setFormData] = useState({
-    tokenName: 'Test Token',
-    tokenTicker: 'TT',
-    tokenQty: '100',
-    startingPrice: '0.5',
-    discountRate: '0.0001',
+    tokenName: '',
+    tokenTicker: '',
+    tokenQty: '',
+    startingPrice: '',
+    discountRate: '',
   });
   const [enableDeployToken, setEnableDeployToken] = useState(false);
 
