@@ -61,7 +61,7 @@ npm run start:windows
 
 ## Usage
 
-### Watch the recording here: youtube-link-goes-here
+### Watch the recording here: [https://youtu.be/z7zxEyoPRbY](https://youtu.be/z7zxEyoPRbY)
 
 ### Alternatively, here are the steps:
 

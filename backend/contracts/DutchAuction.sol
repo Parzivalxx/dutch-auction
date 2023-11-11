@@ -51,8 +51,8 @@ function min(uint256 a, uint256 b) pure returns (uint256) {
 }
 
 contract DutchAuction {
-    uint public constant AUCTION_DURATION = 2 minutes;
-    uint public constant REVEAL_DURATION = 1 minutes;
+    uint public constant AUCTION_DURATION = 20 minutes;
+    uint public constant REVEAL_DURATION = 10 minutes;
 
     IERC20 public immutable token;
     uint public immutable tokenQty;
